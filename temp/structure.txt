@@ -1,0 +1,1 @@
+vidaa-iptv/ ├── public/ │ ├── index.html │ └── assets/ ├── src/ │ ├── main.js │ ├── app.js │ ├── player.js │ ├── api.js │ ├── remote.js │ ├── screens/ │ │ ├── login.js │ │ ├── home.js │ │ └── player.js │ └── styles/ │ └── app.css └── package.json
