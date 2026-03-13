@@ -1,5 +1,7 @@
 import { login } from "../api.js";
 
+import { fetchWeather } from "../weather_api.js";
+
 class LoginScreen {
 
   constructor(app) {
@@ -15,6 +17,8 @@ class LoginScreen {
     const html = await response.text();
 
     root.innerHTML = html;
+
+    fetchWeather();
 
     // root.innerHTML = `
     //   <div class="login">
