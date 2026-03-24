@@ -34,22 +34,31 @@
 <!-- Login Background -->
 <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-image: url('../public/assets/background-login.png'); background-size: cover; background-repeat: no-repeat; background-position: center; z-index: -1;"></div>
 
+<!-- Header -->
 <header style="position: fixed; top: 0; left: 0; width: 100%; height: 80px; background-color: transparent; display: flex; align-items: center; padding-left: 20px; padding-right: 20px; justify-content: space-between; z-index: 10;">
-  <img src="assets/logo.png" alt="Logo" style="height: 60px; width: auto; margin-top: 40px; margin-left: 20px;">
+  <img src="assets/logo.png" alt="Logo" style="height: 3vw; width: auto; margin-top: 3vw; margin-left: 2vw;">
 
-  <div class="date-box" style="display: flex; flex-direction: column; align-items: flex-end; margin-top: 40px; margin-right: 20px;"> 
-    <div id="time" style="color: white; font-size: 18px; font-weight: 500;"></div>
-    <div id="date" style="color: white; font-size: 18px; font-weight: 500;"></div>
+  <div class="date-box">
+    <div class="date-box-left">
+      <div id="time"></div>
+      <div id="date"></div>
+    </div>
+    <div class="date-box-divider"></div>
+    <div class="date-box-right">
+      <img id="weatherIcon" />
+      <div class="date-box-weather">
+        <div id="temperature"></div>
+        <p>Belgrade</p>
+      </div>
+    </div>
   </div>
-
 </header>
 
-<img id="weatherIcon" />
 
 <div style="display: flex; justify-content: space-between; margin-top: 4%;">
 
 <!-- Left Section -->
-<div style="max-width: 30%; margin-left: 4%;">
+<div style="max-width: 30%; margin-left: 4%; margin-top: 16vh;">
   <div style="display: flex; align-items: center; gap: 16px;">
     <img style="height: 6.6vw; width: auto;" src="assets/icon-mobile.png" alt="Mobile Icon" >
     <h1 style="color: white; font-size: 2.4vw;" >Register with mobile phone</h1>
@@ -59,7 +68,7 @@
 </div>
 
 <!-- Right Section -->
-<div style="max-width: 30%; margin-right: 4%;">
+<div style="max-width: 30%; margin-right: 4%; margin-top: 16vh;">
   <div style="display: flex; align-items: center; gap: 16px;">
     <img style="height: 6.6vw; width: auto;" src="assets/icon-customer.png" alt="Mobile Icon" >
     <h1 style="color: white; font-size: 2.4vw; margin-left: 4vw;" >Customer center</h1>
@@ -102,6 +111,7 @@
 
 </div>
 
+<!-- Login Section -->
 <div class="login" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; gap: 15px; align-items: center; background: transparent; padding: 40px; border-radius: 8px; z-index: 1;">
   <h1 style="color: white; font-size: 28px; margin: 0 0 20px 0; font-weight: 600;">Sign In</h1>
   <input id="username" placeholder="Phone number or Username" style="padding: 10px; width: 250px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
@@ -115,7 +125,6 @@ transform: translateX(-50%); text-align: center; width: 80%;">If you need help c
 
 
 <footer style="border-top: 1px solid #4e4e4e; position: fixed; bottom: 0; left: 0; width: 100%; height: 80px; background-color: transparent; display: flex; align-items: center; padding-left: 20px; padding-right: 20px; justify-content: space-between; z-index: 10;">
-
 
   <div class="footer-left">
 

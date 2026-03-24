@@ -35,6 +35,7 @@ export async function fetchWeather() {
 
         document.getElementById("time").innerHTML = time;
         document.getElementById("date").textContent = formatted_date;
+        document.getElementById("temperature").textContent = `${Math.round(data.main.temp)}°C`;
 
         console.log("Date:", formatted_date);
         console.log("Temperature:", Math.round(data.main.temp), "°C");

@@ -12,7 +12,7 @@ class LoginScreen {
 
     const root = document.getElementById("app");
 
-    const response = await fetch("../src/templates/login.html");
+    const response = await fetch("../src/templates/login-2.html");
 
     const html = await response.text();
 
@@ -30,6 +30,19 @@ class LoginScreen {
 
     document.getElementById("loginBtn")
       .addEventListener("click", this.handleLogin.bind(this));
+
+    document.getElementById("registerBtn")
+      .addEventListener("click", this.showRegistration.bind(this));
+
+  }
+
+  showRegistration() {
+
+    const loginSection = document.getElementById("login-section");
+    loginSection.style.display = "none";
+
+    const registrationSection = document.getElementById("registration-section");
+    registrationSection.style.display = "flex";
 
   }
 
