@@ -1,9 +1,10 @@
-
 <style>
 
   .content {
     display: flex;
     height: 100vh;
+    overflow: hidden;
+    position: relative;
 
     background-image: url('../public/assets/background-login.png');
     background-size: cover;
@@ -46,6 +47,112 @@
   color: #fff;
 }
 
+.vertical-scroll.minimized {
+  max-width: 8vw;
+}
+
+.vertical-scroll.minimized .item {
+  font-size: 0;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vertical-scroll.minimized .item img {
+  width: 4vw;
+  height: 4vw;
+  margin-right: 0;
+}
+
+/* Sub Menu */
+
+.sub-menu {
+  position: fixed;
+  top: 40vh;
+  left: 10vw;
+  display: none;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 60vh;
+  overflow: hidden;
+  max-width: 20vw;
+  color: white;
+  transition: opacity 0.25s ease;
+}
+
+.sub-menu.visible {
+  display: flex;
+}
+
+.sub-menu .sub-item {
+  padding: 15px 20px;
+  border-radius: 8px;
+  font-size: 1.3em;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
+}
+
+.sub-menu .sub-item .sub-icon {
+  width: 1.5vw;
+  height: 1.5vw;
+  background: rgba(255,255,255,0.3);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.sub-menu .sub-item.active {
+  background: #00b9be;
+  color: #fff;
+}
+
+/* Country Sub Menu */
+
+.country-sub-menu {
+  position: fixed;
+  top: 40vh;
+  left: 30vw;
+  display: none;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 60vh;
+  overflow: hidden;
+  max-width: 20vw;
+  color: white;
+  transition: opacity 0.25s ease;
+}
+
+.country-sub-menu.visible {
+  display: flex;
+}
+
+.country-sub-menu .country-item {
+  padding: 15px 20px;
+  border-radius: 8px;
+  font-size: 1.3em;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
+}
+
+.country-sub-menu .country-item .country-icon {
+  width: 1.5vw;
+  height: 1.5vw;
+  background: rgba(255,255,255,0.3);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.country-sub-menu .country-item.active {
+  background: #00b9be;
+  color: #fff;
+}
+
 /* Channels */
 
 .channels-section {
@@ -55,6 +162,13 @@
   width: 68vw;
   padding: 2vw;
   color: white;
+  overflow: hidden;
+  transition: left 0.25s ease, width 0.25s ease;
+}
+
+.channels-section.expanded {
+  left: 10vw;
+  width: 88vw;
 }
 
 .channels-section h2 {
@@ -63,11 +177,17 @@
   margin-bottom: 1.5vw;
 }
 
+.channels-section.hidden {
+  display: none !important;
+}
+
 .channels-grid {
-  display: flex;
+  display: grid;
+  grid-template-rows: auto auto;
+  grid-auto-flow: column;
+  grid-auto-columns: 16vw;
   gap: 1.2vw;
-  overflow-x: hidden;
-  padding-bottom: 1.5vw;
+  overflow: hidden;
 }
 
 .channel-card {
@@ -121,6 +241,11 @@
   color: #666;
 }
 
+.channel-card.active {
+  outline: 3px solid #00b9be;
+  outline-offset: -3px;
+}
+
 
 </style>
 
@@ -130,7 +255,7 @@
 
   <div class="channels-section">
     <h2>Now On TV</h2>
-    <div class="channels-grid" id="channels-row">
+    <div class="channels-grid" id="channels-grid">
 
       <div class="channel-card">
         <img class="thumbnail" src="" alt="">
@@ -176,9 +301,49 @@
         </div>
       </div>
 
-    </div>
+      <div class="channel-card">
+        <img class="thumbnail" src="" alt="">
+        <div class="info">
+          <img class="logo" src="" alt="">
+          <div class="details">
+            <span class="name">Channel Name</span>
+            <span class="time">00:00 - 00:00</span>
+          </div>
+        </div>
+      </div>
 
-    <div class="channels-grid" id="channels-row-2">
+      <div class="channel-card">
+        <img class="thumbnail" src="" alt="">
+        <div class="info">
+          <img class="logo" src="" alt="">
+          <div class="details">
+            <span class="name">Channel Name</span>
+            <span class="time">00:00 - 00:00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="channel-card">
+        <img class="thumbnail" src="" alt="">
+        <div class="info">
+          <img class="logo" src="" alt="">
+          <div class="details">
+            <span class="name">Channel Name</span>
+            <span class="time">00:00 - 00:00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="channel-card">
+        <img class="thumbnail" src="" alt="">
+        <div class="info">
+          <img class="logo" src="" alt="">
+          <div class="details">
+            <span class="name">Channel Name</span>
+            <span class="time">00:00 - 00:00</span>
+          </div>
+        </div>
+      </div>
 
       <div class="channel-card">
         <img class="thumbnail" src="" alt="">
@@ -233,7 +398,7 @@
 
 <!-- Header -->
 <header style="position: fixed; top: 0; left: 0; width: 100%; height: 80px; background-color: transparent; display: flex; align-items: center; padding-left: 20px; padding-right: 20px; justify-content: space-between; z-index: 10;">
-  <img src="assets/logo.png" alt="Logo" style="height: 3vw; width: auto; margin-top: 3vw; margin-left: 2vw;">
+  <img src="public/assets/logo.png" alt="Logo" style="height: 3vw; width: auto; margin-top: 3vw; margin-left: 2vw;">
 
   <div class="date-box">
     <div class="date-box-left">
@@ -274,4 +439,32 @@
 
   <div class="item" tabindex="-1"> <img src="" alt="icon">Settings</div>
 
+</div>
+
+<!-- Sub Menu -->
+<div class="sub-menu" id="sub-menu">
+  <div class="sub-item active" tabindex="0"><span class="sub-icon"></span>///All</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Favorites</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Internet TV</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Adria Telekom</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Music</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Reality</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>VOD</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Adult Channels</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>News</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>General</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Documentaries</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Children</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Movies</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Sports</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Entertainment</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>4k/UHD</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Local Channels</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>International FTA</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>Camera</div>
+  <div class="sub-item" tabindex="-1"><span class="sub-icon"></span>YouTube</div>
+</div>
+
+<!-- Country Sub Menu -->
+<div class="country-sub-menu" id="country-sub-menu">
 </div>
