@@ -30,6 +30,10 @@ class Remote {
           this.handler.onEnter();
           break;
 
+        case 27:
+          this.handler.onBack();
+          break;
+
       }
 
     });
