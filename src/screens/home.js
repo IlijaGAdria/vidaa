@@ -469,7 +469,7 @@ class HomeScreen {
 
     addCountry("Serbia");
     addCountry("Croatia");
-    addCountry("Germany", "path/to/flag.png");
+    //addCountry("Germany", "path/to/flag.png");
 
     // Populate channels from API
     if (channelsData && Array.isArray(channelsData)) {

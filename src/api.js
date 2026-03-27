@@ -62,7 +62,7 @@ export async function getChannels() {
     }
 
     const data = await response.json();
-    console.log("Channels:", data);
+    //console.log("Channels:", data);
 
     return data;
   } catch (error) {
