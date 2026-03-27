@@ -39,7 +39,9 @@ const handler = {
   onRight: () => handleRight(),
   onEnter: () => handleEnter(),
   onBack: () => {
-    if (focusMode === "channels") {
+    if (focusMode === "player") {
+      stopPlayer();
+    } else if (focusMode === "channels") {
       clearChannelFocus();
       focusMode = "menu";
     } else if (focusMode === "countrysubmenu") {
@@ -170,6 +172,12 @@ function handleEnter() {
     if (selectedItem.textContent == " TV Channels") {
       enterTVChannels();
     }
+  } else if (focusMode === "channels") {
+    var card = getCardAt(rowIndex, colIndex);
+    if (card && card.dataset.stream) {
+      currentPlayerIndex = colIndex * 2 + rowIndex;
+      playChannel(card.dataset.stream);
+    }
   } else if (focusMode === "submenu") {
     const label = subItems[subIndex].textContent.trim();
     if (label === "Internet TV") {
@@ -181,7 +189,9 @@ function handleEnter() {
 
 
 function handleUp() {
-  if (focusMode === "menu") {
+  if (focusMode === "player") {
+    switchChannel(-1);
+  } else if (focusMode === "menu") {
     moveMenuFocus(-1);
   } else if (focusMode === "submenu") {
     moveSubFocus(-1);
@@ -193,7 +203,9 @@ function handleUp() {
 }
 
 function handleDown() {
-  if (focusMode === "menu") {
+  if (focusMode === "player") {
+    switchChannel(1);
+  } else if (focusMode === "menu") {
     moveMenuFocus(1);
   } else if (focusMode === "submenu") {
     moveSubFocus(1);
@@ -308,10 +320,19 @@ function moveChannelRow(direction) {
   setChannelFocus();
 }
 
+// Format EPG datetime string to HH:MM
+function formatEpgTime(datetimeStr) {
+  var parts = datetimeStr.split(" ");
+  if (parts.length < 2) return datetimeStr;
+  var timeParts = parts[1].split(":");
+  return timeParts[0] + ":" + timeParts[1];
+}
+
 // Dynamically add channels
-function addChannel(name, time, thumbnail, logo) {
+function addChannel(name, time, thumbnail, logo, streamUrl) {
   var card = document.createElement("div");
   card.className = "channel-card";
+  card.dataset.stream = streamUrl || "";
   card.innerHTML = `
     <img class="thumbnail" src="${thumbnail}" alt="${name} thumbnail">
     <div class="info">
@@ -326,6 +347,78 @@ function addChannel(name, time, thumbnail, logo) {
   allCards.push(card);
 }
 
+// --- Video Player ---
+var hlsInstance = null;
+var currentPlayerIndex = 0;
+
+function playChannel(streamUrl) {
+  var playerDiv = document.getElementById("video-player");
+  var videoEl = document.getElementById("video-el");
+  if (!playerDiv || !videoEl || !streamUrl) return;
+
+  // Hide UI
+  document.querySelector("header").style.display = "none";
+  document.getElementById("menu").style.display = "none";
+  document.querySelector(".channels-section").style.display = "none";
+  if (subMenu) subMenu.style.display = "none";
+  if (countrySubMenu) countrySubMenu.style.display = "none";
+
+  playerDiv.classList.add("active");
+
+  if (window.Hls && Hls.isSupported()) {
+    if (hlsInstance) {
+      hlsInstance.destroy();
+    }
+    hlsInstance = new Hls();
+    hlsInstance.loadSource(streamUrl);
+    hlsInstance.attachMedia(videoEl);
+    hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+      videoEl.play();
+    });
+  } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {
+    // Safari native HLS
+    videoEl.src = streamUrl;
+    videoEl.play();
+  }
+
+  focusMode = "player";
+}
+
+function switchChannel(direction) {
+  var newIndex = currentPlayerIndex + direction;
+  if (newIndex < 0) newIndex = allCards.length - 1;
+  else if (newIndex >= allCards.length) newIndex = 0;
+  var card = allCards[newIndex];
+  if (card && card.dataset.stream) {
+    currentPlayerIndex = newIndex;
+    playChannel(card.dataset.stream);
+  }
+}
+
+function stopPlayer() {
+  var playerDiv = document.getElementById("video-player");
+  var videoEl = document.getElementById("video-el");
+
+  if (hlsInstance) {
+    hlsInstance.destroy();
+    hlsInstance = null;
+  }
+  if (videoEl) {
+    videoEl.pause();
+    videoEl.removeAttribute("src");
+  }
+  if (playerDiv) playerDiv.classList.remove("active");
+
+  // Restore UI
+  document.querySelector("header").style.display = "";
+  document.getElementById("menu").style.display = "";
+  document.querySelector(".channels-section").style.display = "";
+  if (subMenu) subMenu.style.display = "";
+  if (countrySubMenu) countrySubMenu.style.display = "";
+
+  focusMode = "channels";
+}
+
 class HomeScreen {
 
   constructor(app) {
@@ -334,19 +427,9 @@ class HomeScreen {
 
   async render() {
 
-    //const channels = await getChannels();
+    const channelsData = await getChannels();
 
     const root = document.getElementById("app");
-
-    // root.innerHTML = `
-    //   <div class="channels">
-    //     ${channels.map(c => `
-    //       <div class="channel" data-url="${c.stream}">
-    //         ${c.name}
-    //       </div>
-    //     `).join("")}
-    //   </div>
-    // `;
 
     const response = await fetch("../src/templates/home.html");
     const html = await response.text();
@@ -388,13 +471,26 @@ class HomeScreen {
     addCountry("Croatia");
     addCountry("Germany", "path/to/flag.png");
 
+    // Populate channels from API
+    if (channelsData && Array.isArray(channelsData)) {
+      channelsData.forEach(function(ch) {
+        var epg = ch.current_epg;
+        var name = ch.name || "Unknown";
+        var logo = ch.stream_icon || "";
+        var thumbnail = (epg && epg.epg_img) ? epg.epg_img : "";
+        var time = "";
+        if (epg && epg.start && epg.end) {
+          time = formatEpgTime(epg.start) + " - " + formatEpgTime(epg.end);
+        }
+        addChannel(name, time, thumbnail, logo, ch.src || (epg && epg.src) || "");
+      });
+    }
+
     const remote = new Remote(handler);
     remote.init();
 
     fetchWeather();
     setInterval(fetchWeather, 60000);
-
-    addChannel("Channel 1", "12:00 - 14:00", "https://via.placeholder.com/300x150?text=Thumbnail+1", "https://via.placeholder.com/80x40?text=Logo+1");
 
   }
 

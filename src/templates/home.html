@@ -247,7 +247,35 @@
 }
 
 
+/* Video Player */
+
+#video-player {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 100;
+}
+
+#video-player.active {
+  display: block;
+}
+
+#video-player video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 </style>
+
+<!-- Video Player -->
+<div id="video-player">
+  <video id="video-el" autoplay></video>
+</div>
 
 <!-- Main Content -->
 <div class="content">
@@ -256,139 +284,6 @@
   <div class="channels-section">
     <h2>Now On TV</h2>
     <div class="channels-grid" id="channels-grid">
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="channel-card">
-        <img class="thumbnail" src="" alt="">
-        <div class="info">
-          <img class="logo" src="" alt="">
-          <div class="details">
-            <span class="name">Channel Name</span>
-            <span class="time">00:00 - 00:00</span>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 
