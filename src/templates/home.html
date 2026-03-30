@@ -56,10 +56,15 @@
 
 .vertical-scroll.minimized .item {
   font-size: 0;
-  padding: 10px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.8vw;
+  overflow: hidden;
+}
+
+.vertical-scroll.minimized .item i {
+  font-size: 1.5vw;
 }
 
 .vertical-scroll.minimized .item img {
@@ -154,6 +159,72 @@
 .country-sub-menu .country-item.active {
   background: #00b9be;
   color: #fff;
+}
+
+/* Channel List (filtered category view) */
+
+.channel-list {
+  position: fixed;
+  top: 40vh;
+  left: 30vw;
+  display: none;
+  flex-direction: column;
+  gap: 0.8vw;
+  max-height: 55vh;
+  overflow: hidden;
+  width: 40vw;
+  color: white;
+  transition: opacity 0.25s ease;
+}
+
+.channel-list.visible {
+  display: flex;
+}
+
+.channel-list .channel-list-item {
+  display: flex;
+  align-items: center;
+  padding: 0.8vw 1.2vw;
+  border-radius: 8px;
+  font-size: 1.2em;
+  gap: 1vw;
+  background: transparent;
+}
+
+.channel-list .channel-list-item.active {
+  background: #00b9be;
+  color: #fff;
+}
+
+.channel-list .channel-list-item .cl-number {
+  font-size: 1.4em;
+  font-weight: 700;
+  min-width: 3vw;
+}
+
+.channel-list .channel-list-item .cl-icon {
+  width: 3vw;
+  height: 3vw;
+  object-fit: contain;
+  border-radius: 0.3vw;
+  background: rgba(255,255,255,0.1);
+}
+
+.channel-list .channel-list-item .cl-name {
+  flex: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.channel-list .channel-list-item .cl-play {
+  font-size: 1.2em;
+  opacity: 0.6;
+}
+
+.channel-list .channel-list-item.active .cl-play {
+  opacity: 1;
 }
 
 /* Channels */
@@ -365,4 +436,8 @@
 
 <!-- Country Sub Menu -->
 <div class="country-sub-menu" id="country-sub-menu">
+</div>
+
+<!-- Channel List (filtered category view) -->
+<div class="channel-list" id="channel-list">
 </div>
