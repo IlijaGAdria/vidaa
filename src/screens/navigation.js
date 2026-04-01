@@ -1,5 +1,5 @@
 import state from "./state.js";
-import { playChannel, switchChannel, stopPlayer, setCurrentPlayerIndex } from "./player.js";
+import { playChannel, switchChannel, stopPlayer, setCurrentPlayerIndex, togglePause } from "./player.js";
 
 // --- Menu UI helpers ---
 
@@ -263,6 +263,13 @@ function enterTVChannels() {
 // --- Key handlers ---
 
 function handleEnter() {
+  if (state.focusMode === "playeroverlay") {
+    var btn = state.playerOverlayBtns[state.playerOverlayIndex];
+    if (btn && btn.id === "po-pause") {
+      togglePause();
+    }
+    return;
+  }
   if (state.focusMode === "menu") {
     var selectedItem = state.items[state.selectedIndex];
     if (selectedItem.textContent == " TV Channels") {
@@ -295,7 +302,45 @@ function handleEnter() {
   }
 }
 
+// --- Player overlay ---
+
+function showPlayerOverlay() {
+  state.playerOverlay = document.getElementById("player-overlay");
+  if (!state.playerOverlay) return;
+  state.playerOverlay.classList.add("visible");
+  state.playerOverlayBtns = Array.from(state.playerOverlay.querySelectorAll(".po-btn, .po-action"));
+  state.playerOverlayIndex = 1; // start on pause button
+  updateOverlayFocus();
+}
+
+function hidePlayerOverlay() {
+  if (state.playerOverlay) state.playerOverlay.classList.remove("visible");
+  clearOverlayFocus();
+}
+
+function updateOverlayFocus() {
+  state.playerOverlayBtns.forEach(function(btn) { btn.classList.remove("active"); });
+  if (state.playerOverlayBtns[state.playerOverlayIndex]) {
+    state.playerOverlayBtns[state.playerOverlayIndex].classList.add("active");
+  }
+}
+
+function clearOverlayFocus() {
+  state.playerOverlayBtns.forEach(function(btn) { btn.classList.remove("active"); });
+}
+
+function moveOverlayFocus(direction) {
+  var newIdx = state.playerOverlayIndex + direction;
+  if (newIdx < 0 || newIdx >= state.playerOverlayBtns.length) return;
+  state.playerOverlayIndex = newIdx;
+  updateOverlayFocus();
+}
+
 function handleUp() {
+  if (state.focusMode === "playeroverlay") {
+    switchChannel(-1);
+    return;
+  }
   if (state.focusMode === "player") {
     switchChannel(-1);
   } else if (state.focusMode === "menu") {
@@ -312,6 +357,10 @@ function handleUp() {
 }
 
 function handleDown() {
+  if (state.focusMode === "playeroverlay") {
+    switchChannel(1);
+    return;
+  }
   if (state.focusMode === "player") {
     switchChannel(1);
   } else if (state.focusMode === "menu") {
@@ -328,6 +377,15 @@ function handleDown() {
 }
 
 function handleLeft() {
+  if (state.focusMode === "playeroverlay") {
+    if (state.playerOverlayIndex === 0) {
+      hidePlayerOverlay();
+      state.focusMode = "player";
+    } else {
+      moveOverlayFocus(-1);
+    }
+    return;
+  }
   if (state.focusMode === "channels") {
     if (state.colIndex === 0) {
       clearChannelFocus();
@@ -350,6 +408,15 @@ function handleLeft() {
 }
 
 function handleRight() {
+  if (state.focusMode === "player") {
+    showPlayerOverlay();
+    state.focusMode = "playeroverlay";
+    return;
+  }
+  if (state.focusMode === "playeroverlay") {
+    moveOverlayFocus(1);
+    return;
+  }
   if (state.focusMode === "menu") {
     if (state.allCards.length > 0) {
       state.focusMode = "channels";
@@ -363,7 +430,13 @@ function handleRight() {
 }
 
 function handleBack() {
+  if (state.focusMode === "playeroverlay") {
+    hidePlayerOverlay();
+    state.focusMode = "player";
+    return;
+  }
   if (state.focusMode === "player") {
+    hidePlayerOverlay();
     stopPlayer();
   } else if (state.focusMode === "channels") {
     clearChannelFocus();

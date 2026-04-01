@@ -17,20 +17,24 @@ export async function login(username, password) {
 
   console.log(deviceId);
 
+  deviceId = "webbrowser"; // Override for testing
+
+  let macAddress = "a1:b2:c3:d4:e5"; // Placeholder MAC address
+
   let languageId = getLanguage();
   
   console.log(languageId);
 
   let deviceType = "LgTv";
 
-  let pnToken = "test-pn-token";
+  let pnToken = null;
 
-  // const res = await fetch(`${API_URL}/login`, {
-  //   method: "POST",
-  //   body: JSON.stringify({username, password, deviceId, deviceId, languageId, deviceType, pnToken})
-  // });
+  const res = await fetch(`${API_URL}/login`, {
+    method: "POST",
+    body: JSON.stringify({username, password, macAddress, deviceId, languageId, deviceType, pnToken})
+  });
 
-  // console.log(await res.json());
+  console.log(await res.json());
 
   return {success: true};
 
@@ -70,4 +74,63 @@ export async function getChannels() {
   }
 }
 
-// logout, epg, get movies
+export async function fetchChannelEpg(channelId) {
+  try {
+    const response = await fetch(`${API_URL}/epg/channel/${channelId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    // Handle wrapped response: { success, data }
+    if (!result || result.success === false) {
+      return null;
+    }
+
+    const data = result.data;
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return null;
+    }
+
+    // Same as BrightScript → take current program (first item)
+    return data[0];
+
+  } catch (error) {
+    console.error("Failed to fetch EPG:", error);
+    return null;
+  }
+}
+
+export async function addFavoriteChannel(channelId, token, apiAuth) {
+  const response = await fetch(`${API_URL}/favorite/add`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json, text/plain, */*",
+      "Authorization": `Bearer ${token}`,
+      "x-api-auth": apiAuth,
+      "device-mac": "a1:b2:c3:d4:e5",
+      "device-uid": "webbrowser",
+      "language-id": "1",
+      "reskin": reskin
+    },
+    body: JSON.stringify({
+      channel_id: channelId
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
+}

@@ -37,5 +37,10 @@ const state = {
 
   // Raw channel data from API
   channelsData: [],
+
+  // Player overlay state
+  playerOverlay: null,
+  playerOverlayBtns: [],
+  playerOverlayIndex: 0,
 };
 export default state;
