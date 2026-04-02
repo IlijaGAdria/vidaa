@@ -6,38 +6,65 @@ import { getLanguage } from "./language.js";
 
 export async function login(username, password) {
 
-  console.log(username, password);  
+  console.log("[Login] Attempting login for username:", username);
 
   let deviceId = localStorage.getItem("device_id");
 
   if (!deviceId) {
     deviceId = crypto.randomUUID();
     localStorage.setItem("device_id", deviceId);
+    console.log("[Login] Generated new device ID:", deviceId);
+  } else {
+    console.log("[Login] Using existing device ID:", deviceId);
   }
 
-  console.log(deviceId);
-
-  deviceId = "webbrowser"; // Override for testing
-
-  let macAddress = "a1:b2:c3:d4:e5"; // Placeholder MAC address
+  let macAddress = localStorage.getItem("device_mac");
+  if (!macAddress) {
+    macAddress = Array.from({ length: 6 }, () =>
+      Math.floor(Math.random() * 256).toString(16).padStart(2, "0")
+    ).join(":");
+    localStorage.setItem("device_mac", macAddress);
+  }
 
   let languageId = getLanguage();
   
-  console.log(languageId);
+  console.log("[Login] Language ID:", languageId);
 
   let deviceType = "LgTv";
 
-  let pnToken = null;
+  console.log("[Login] Sending request to:", `${API_URL}/login`, { username, deviceId, languageId, deviceType });
 
-  const res = await fetch(`${API_URL}/login`, {
-    method: "POST",
-    body: JSON.stringify({username, password, macAddress, deviceId, languageId, deviceType, pnToken})
-  });
+  try {
+    const res = await fetch(`${API_URL}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "language-id": String(languageId),
+        "reskin": reskin
+      },
+      body: JSON.stringify({
+        username,
+        password,
+        mac: macAddress,
+        device_uid: deviceId,
+        language_id: languageId,
+        device_type: "LgTv",
+        pn_token: null
+      })
+    });
 
-  console.log(await res.json());
+    if (!res.ok) {
+      console.error("[Login] HTTP error:", res.status, res.statusText);
+      return { success: false, error: `HTTP ${res.status}` };
+    }
 
-  return {success: true};
-
+    const data = await res.json();
+    console.log("[Login] Response:", data);
+    return data;
+  } catch (err) {
+    console.error("[Login] Network/fetch error:", err);
+    return { success: false, error: err.message };
+  }
 }
 
 export async function getChannels() {
@@ -46,10 +73,10 @@ export async function getChannels() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer YOUR_TOKEN",
-        "x-api-auth": "YOUR_API_AUTH",
-        "device-uid": "webbrowser",
-        "device-mac": "a1:b2:c3:d4:e5",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "x-api-auth": "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
+        "device-uid": localStorage.getItem("device_id") || "webbrowser",
+        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
         "language-id": "1",
         "reskin": reskin
       },
@@ -109,16 +136,16 @@ export async function fetchChannelEpg(channelId) {
   }
 }
 
-export async function addFavoriteChannel(channelId, token, apiAuth) {
+export async function addFavoriteChannel(channelId) {
   const response = await fetch(`${API_URL}/favorite/add`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Accept": "application/json, text/plain, */*",
-      "Authorization": `Bearer ${token}`,
-      "x-api-auth": apiAuth,
-      "device-mac": "a1:b2:c3:d4:e5",
-      "device-uid": "webbrowser",
+      "Authorization": "Bearer " + localStorage.getItem("access_token"),
+      "x-api-auth": "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
+      "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+      "device-uid": localStorage.getItem("device_id") || "webbrowser",
       "language-id": "1",
       "reskin": reskin
     },
@@ -133,4 +160,68 @@ export async function addFavoriteChannel(channelId, token, apiAuth) {
   }
 
   return response.json();
+}
+
+export async function removeFavoriteChannel(channelId) {
+  const response = await fetch(`${API_URL}/favorite/remove`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json, text/plain, */*",
+      "Authorization": "Bearer " + localStorage.getItem("access_token"),
+      "x-api-auth": "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
+      "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+      "device-uid": localStorage.getItem("device_id") || "webbrowser",
+      "language-id": "1",
+      "reskin": reskin
+    },
+    body: JSON.stringify({
+      channel_id: channelId
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
+}
+
+export async function fetchFavorites() {
+
+  const headers = {
+    "accept": "application/json, text/plain, */*",
+    "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
+    "authorization": "Bearer " + localStorage.getItem("access_token"),
+    "device-mac": localStorage.getItem("device_mac"),
+    "device-uid": localStorage.getItem("device_uid") || localStorage.getItem("device_id") || "webbrowser",
+    "language-id": "1",
+    "reskin": "adria",
+    "x-api-auth": "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0"
+  };
+
+  try {
+    const response = await fetch(`${API_URL}/favorites`, {
+      method: "POST",
+      headers: headers,
+      body: null
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("[Favorites] API response:", data);
+
+    // Return the channels array directly
+    var channels = data.channels || data.data || data;
+    if (!Array.isArray(channels)) channels = [];
+    return channels;
+
+  } catch (error) {
+    console.error("Error fetching favorites:", error);
+    throw error;
+  }
 }

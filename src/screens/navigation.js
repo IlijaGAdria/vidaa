@@ -1,7 +1,10 @@
 import state from "./state.js";
-import { playChannel, switchChannel, stopPlayer, setCurrentPlayerIndex, togglePause } from "./player.js";
+import { playChannel, switchChannel, stopPlayer, togglePause, getCurrentChannel } from "./player.js";
+import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel } from "../api.js";
 
-// --- Menu UI helpers ---
+// ================================================
+// DOM Helpers
+// ================================================
 
 function hideChannelsSection() {
   var section = document.querySelector('.channels-section');
@@ -27,7 +30,9 @@ function expandMenu() {
   if (channelsSection) channelsSection.classList.remove("expanded");
 }
 
-// --- Sub-menu ---
+// ================================================
+// Sub-menu
+// ================================================
 
 function showSubMenu() {
   if (state.subMenu) state.subMenu.classList.add("visible");
@@ -38,7 +43,6 @@ function showSubMenu() {
   if (state.subItems[state.subIndex]) {
     state.subItems[state.subIndex].classList.add("active");
     state.subItems[state.subIndex].tabIndex = 0;
-    // Scroll to the current selection
     var topIdx = Math.max(0, state.subIndex - 3);
     setTimeout(function() {
       state.subWrapper.style.transform = "translateY(" + (-state.subItems[topIdx].offsetTop) + "px)";
@@ -52,20 +56,18 @@ function hideSubMenu() {
 
 function moveSubFocus(direction) {
   if (state.subIndex + direction < 0 || state.subIndex + direction >= state.subItems.length) return;
-
   state.subItems[state.subIndex].tabIndex = -1;
   state.subItems[state.subIndex].classList.remove("active");
-
   state.subIndex += direction;
-
   state.subItems[state.subIndex].tabIndex = 0;
   state.subItems[state.subIndex].classList.add("active");
-
   var topIdx = Math.max(0, state.subIndex - 3);
   state.subWrapper.style.transform = "translateY(" + (-state.subItems[topIdx].offsetTop) + "px)";
 }
 
-// --- Country sub-menu ---
+// ================================================
+// Country sub-menu
+// ================================================
 
 function showCountrySubMenu() {
   if (state.countrySubMenu) state.countrySubMenu.classList.add("visible");
@@ -86,37 +88,33 @@ function hideCountrySubMenu() {
 
 function moveCountryFocus(direction) {
   if (state.countryIndex + direction < 0 || state.countryIndex + direction >= state.countryItems.length) return;
-
   state.countryItems[state.countryIndex].tabIndex = -1;
   state.countryItems[state.countryIndex].classList.remove("active");
-
   state.countryIndex += direction;
-
   state.countryItems[state.countryIndex].tabIndex = 0;
   state.countryItems[state.countryIndex].classList.add("active");
-
   var topIdx = Math.max(0, state.countryIndex - 3);
   state.countryWrapper.style.transform = "translateY(" + (-state.countryItems[topIdx].offsetTop) + "px)";
 }
 
-// --- Menu navigation ---
+// ================================================
+// Menu navigation
+// ================================================
 
 function moveMenuFocus(direction) {
   if (state.selectedIndex + direction < 0 || state.selectedIndex + direction >= state.items.length) return;
-
   state.items[state.selectedIndex].tabIndex = -1;
   state.items[state.selectedIndex].classList.remove("active");
-
   state.selectedIndex += direction;
-
   state.items[state.selectedIndex].tabIndex = 0;
   state.items[state.selectedIndex].classList.add("active");
-
   var topIndex = Math.max(0, state.selectedIndex - 3);
   state.wrapper.style.transform = "translateY(" + (-state.items[topIndex].offsetTop) + "px)";
 }
 
-// --- Channel grid navigation ---
+// ================================================
+// Channel grid navigation
+// ================================================
 
 function getCardAt(row, col) {
   var idx = col * 2 + row;
@@ -151,7 +149,6 @@ function moveChannelCol(direction) {
   var newCol = state.colIndex + direction;
   if (newCol < 0 || newCol >= totalCols) return;
   if (!getCardAt(state.rowIndex, newCol)) return;
-
   clearChannelFocus();
   state.colIndex = newCol;
   setChannelFocus();
@@ -161,15 +158,15 @@ function moveChannelRow(direction) {
   var newRow = state.rowIndex + direction;
   if (newRow < 0 || newRow > 1) return;
   if (!getCardAt(newRow, state.colIndex)) return;
-
   clearChannelFocus();
   state.rowIndex = newRow;
   setChannelFocus();
 }
 
-// --- Channel list (filtered category view) ---
+// ================================================
+// Channel list (categories & favorites)
+// ================================================
 
-// Map sub-menu labels to API category_name values
 var categoryMap = {
   "Music": "Muzički",
   "News": "Informativni",
@@ -183,6 +180,7 @@ var categoryMap = {
 };
 
 function showChannelList(categoryName) {
+  state.channelListType = "category";
   var filtered;
   if (categoryName) {
     filtered = state.channelsData.filter(function(ch) {
@@ -191,28 +189,59 @@ function showChannelList(categoryName) {
   } else {
     filtered = state.channelsData;
   }
+  renderChannelList(filtered);
+}
 
-  // Clear existing items
+function showFavoritesList() {
+  state.channelListType = "favorites";
+  // Clear and show loading state
+  while (state.channelListWrapper.firstChild) {
+    state.channelListWrapper.removeChild(state.channelListWrapper.firstChild);
+  }
+  state.channelListItems = [];
+  if (state.channelList) state.channelList.classList.add("visible");
+
+  fetchFavorites().then(function(favChannels) {
+    if (!Array.isArray(favChannels)) favChannels = [];
+    console.log("[Favorites] Loaded", favChannels.length, "favorites");
+
+    // Match favorites against full channel data to get complete info
+    var channels = favChannels.map(function(fav) {
+      var id = fav.id || fav.channel_id;
+      for (var i = 0; i < state.channelsData.length; i++) {
+        if (state.channelsData[i].id === id) {
+          return state.channelsData[i];
+        }
+      }
+      return fav;
+    });
+
+    renderChannelList(channels);
+  }).catch(function(err) {
+    console.error("Failed to load favorites:", err);
+  });
+}
+
+function renderChannelList(channels) {
   while (state.channelListWrapper.firstChild) {
     state.channelListWrapper.removeChild(state.channelListWrapper.firstChild);
   }
   state.channelListItems = [];
 
-  filtered.forEach(function(ch) {
+  channels.forEach(function(ch) {
     var item = document.createElement("div");
     item.className = "channel-list-item";
     item.tabIndex = -1;
     item.dataset.stream = ch.src || "";
     item.innerHTML =
       '<span class="cl-number">' + (ch.num || "") + '.</span>' +
-      '<img class="cl-icon" src="' + (ch.stream_icon || "") + '" alt="">' +
+      '<img class="cl-icon" src="' + (ch.stream_icon || "") + '" alt="" onerror="this.style.display=\'none\'">' +
       '<span class="cl-name">' + (ch.name || "") + '</span>' +
       '<i class="fa-solid fa-circle-play cl-play"></i>';
     state.channelListWrapper.appendChild(item);
   });
 
   state.channelListItems = Array.from(state.channelList.querySelectorAll(".channel-list-item"));
-
   if (state.channelList) state.channelList.classList.add("visible");
   state.channelListIndex = 0;
 
@@ -232,77 +261,81 @@ function hideChannelList() {
 
 function moveChannelListFocus(direction) {
   if (state.channelListIndex + direction < 0 || state.channelListIndex + direction >= state.channelListItems.length) return;
-
   state.channelListItems[state.channelListIndex].tabIndex = -1;
   state.channelListItems[state.channelListIndex].classList.remove("active");
-
   state.channelListIndex += direction;
-
   state.channelListItems[state.channelListIndex].tabIndex = 0;
   state.channelListItems[state.channelListIndex].classList.add("active");
-
   var topIdx = Math.max(0, state.channelListIndex - 3);
   state.channelListWrapper.style.transform = "translateY(" + (-state.channelListItems[topIdx].offsetTop) + "px)";
 }
 
-// --- TV Channels entry ---
+// ================================================
+// Player UI management
+// ================================================
 
-function enterTVChannels() {
-  console.log("Entering TV Channels");
-  minimizeMenu();
-  // Recalculate scroll after menu resizes from minimizing
-  setTimeout(function() {
-    var topIndex = Math.max(0, state.selectedIndex - 3);
-    state.wrapper.style.transform = "translateY(" + (-state.items[topIndex].offsetTop) + "px)";
-  }, 0);
-  showSubMenu();
-  hideChannelsSection();
-  state.focusMode = "submenu";
+// Hide all app UI elements so only the video player is visible
+function hideAllUI() {
+  document.querySelector("header").style.display = "none";
+  document.getElementById("menu").style.display = "none";
+  document.querySelector(".channels-section").style.display = "none";
+  if (state.subMenu) state.subMenu.style.display = "none";
+  if (state.countrySubMenu) state.countrySubMenu.style.display = "none";
+  if (state.channelList) state.channelList.style.display = "none";
 }
 
-// --- Key handlers ---
-
-function handleEnter() {
-  if (state.focusMode === "playeroverlay") {
-    var btn = state.playerOverlayBtns[state.playerOverlayIndex];
-    if (btn && btn.id === "po-pause") {
-      togglePause();
-    }
-    return;
-  }
-  if (state.focusMode === "menu") {
-    var selectedItem = state.items[state.selectedIndex];
-    if (selectedItem.textContent == " TV Channels") {
-      enterTVChannels();
-    }
-  } else if (state.focusMode === "channels") {
-    var card = getCardAt(state.rowIndex, state.colIndex);
-    if (card && card.dataset.stream) {
-      setCurrentPlayerIndex(state.colIndex * 2 + state.rowIndex);
-      playChannel(card.dataset.stream);
-    }
-  } else if (state.focusMode === "submenu") {
-    var label = state.subItems[state.subIndex].textContent.trim();
-    if (label === "Internet TV") {
-      showCountrySubMenu();
-      state.focusMode = "countrysubmenu";
-    } else if (label === "///All" || label === "All") {
-      showChannelList(null);
-      state.focusMode = "channellist";
-    } else if (categoryMap[label]) {
-      showChannelList(categoryMap[label]);
-      state.focusMode = "channellist";
-    }
-  } else if (state.focusMode === "channellist") {
-    var item = state.channelListItems[state.channelListIndex];
-    if (item && item.dataset.stream) {
-      setCurrentPlayerIndex(0);
-      playChannel(item.dataset.stream);
-    }
-  }
+// Restore all app UI elements (clear inline display overrides, let CSS classes decide)
+function restoreAllUI() {
+  document.querySelector("header").style.display = "";
+  document.getElementById("menu").style.display = "";
+  document.querySelector(".channels-section").style.display = "";
+  if (state.subMenu) state.subMenu.style.display = "";
+  if (state.countrySubMenu) state.countrySubMenu.style.display = "";
+  if (state.channelList) state.channelList.style.display = "";
 }
 
-// --- Player overlay ---
+// Enter the video player from any context
+function enterPlayer(streamUrl, playlist, playlistIndex) {
+  state.previousFocusMode = state.focusMode;
+  state.activePlaylist = playlist;
+  state.activePlaylistIndex = playlistIndex;
+  hideAllUI();
+  playChannel(streamUrl);
+  state.focusMode = "player";
+}
+
+// Exit the video player and restore the correct UI state
+function exitPlayer() {
+  hidePlayerOverlay();
+  stopPlayer();
+  restoreAllUI();
+
+  var returnTo = state.previousFocusMode || "channels";
+
+  if (returnTo === "channellist") {
+    // Came from channel list (favorites or category) — restore that view
+    minimizeMenu();
+    hideChannelsSection();
+    showSubMenu();
+    if (state.channelList) state.channelList.classList.add("visible");
+    // Refresh the list if it was favorites (may have changed)
+    if (state.channelListType === "favorites") {
+      showFavoritesList();
+    }
+    state.focusMode = "channellist";
+  } else if (returnTo === "channels") {
+    state.focusMode = "channels";
+    setChannelFocus();
+  } else {
+    state.focusMode = returnTo;
+  }
+
+  state.previousFocusMode = null;
+}
+
+// ================================================
+// Player overlay
+// ================================================
 
 function showPlayerOverlay() {
   state.playerOverlay = document.getElementById("player-overlay");
@@ -336,12 +369,110 @@ function moveOverlayFocus(direction) {
   updateOverlayFocus();
 }
 
-function handleUp() {
+// ================================================
+// TV Channels entry
+// ================================================
+
+function enterTVChannels() {
+  minimizeMenu();
+  setTimeout(function() {
+    var topIndex = Math.max(0, state.selectedIndex - 3);
+    state.wrapper.style.transform = "translateY(" + (-state.items[topIndex].offsetTop) + "px)";
+  }, 0);
+  showSubMenu();
+  hideChannelsSection();
+  state.focusMode = "submenu";
+}
+
+// ================================================
+// Key handlers
+// ================================================
+
+function handleEnter() {
+  // Player overlay actions
   if (state.focusMode === "playeroverlay") {
-    switchChannel(-1);
+    var btn = state.playerOverlayBtns[state.playerOverlayIndex];
+    if (btn && btn.id === "po-pause") {
+      togglePause();
+    } else if (btn && btn.id === "po-favorite") {
+      var ch = getCurrentChannel();
+      if (ch && ch.id) {
+        if (btn.dataset.favorited === "true") {
+          removeFavoriteChannel(ch.id).then(function() {
+            btn.innerHTML = '<i class="fa-regular fa-heart"></i> Add to Favorites';
+            btn.classList.remove("active");
+            btn.dataset.favorited = "false";
+            ch.favorite = false;
+          }).catch(function(err) {
+            console.error("Failed to remove favorite:", err);
+          });
+        } else {
+          addFavoriteChannel(ch.id).then(function() {
+            btn.innerHTML = '<i class="fa-solid fa-heart"></i> Added!';
+            btn.classList.add("active");
+            btn.dataset.favorited = "true";
+            ch.favorite = true;
+          }).catch(function(err) {
+            console.error("Failed to add favorite:", err);
+          });
+        }
+      }
+    }
     return;
   }
-  if (state.focusMode === "player") {
+
+  // Main menu
+  if (state.focusMode === "menu") {
+    var selectedItem = state.items[state.selectedIndex];
+    if (selectedItem && selectedItem.textContent.trim() === "TV Channels") {
+      enterTVChannels();
+    }
+    return;
+  }
+
+  // Channel grid — enter player with full grid as playlist
+  if (state.focusMode === "channels") {
+    var card = getCardAt(state.rowIndex, state.colIndex);
+    if (card && card.dataset.stream) {
+      var gridStreams = state.allCards.map(function(c) { return c.dataset.stream; }).filter(Boolean);
+      var gridIndex = state.colIndex * 2 + state.rowIndex;
+      enterPlayer(card.dataset.stream, gridStreams, gridIndex);
+    }
+    return;
+  }
+
+  // Sub-menu — open category, favorites, or country submenu
+  if (state.focusMode === "submenu") {
+    var label = state.subItems[state.subIndex].textContent.trim();
+    if (label === "Internet TV") {
+      showCountrySubMenu();
+      state.focusMode = "countrysubmenu";
+    } else if (label === "All") {
+      showChannelList(null);
+      state.focusMode = "channellist";
+    } else if (label === "Favorites") {
+      showFavoritesList();
+      state.focusMode = "channellist";
+    } else if (categoryMap[label]) {
+      showChannelList(categoryMap[label]);
+      state.focusMode = "channellist";
+    }
+    return;
+  }
+
+  // Channel list — enter player with filtered list as playlist
+  if (state.focusMode === "channellist") {
+    var item = state.channelListItems[state.channelListIndex];
+    if (item && item.dataset.stream) {
+      var listStreams = state.channelListItems.map(function(i) { return i.dataset.stream; }).filter(Boolean);
+      enterPlayer(item.dataset.stream, listStreams, state.channelListIndex);
+    }
+    return;
+  }
+}
+
+function handleUp() {
+  if (state.focusMode === "playeroverlay" || state.focusMode === "player") {
     switchChannel(-1);
   } else if (state.focusMode === "menu") {
     moveMenuFocus(-1);
@@ -351,17 +482,13 @@ function handleUp() {
     moveCountryFocus(-1);
   } else if (state.focusMode === "channellist") {
     moveChannelListFocus(-1);
-  } else {
+  } else if (state.focusMode === "channels") {
     moveChannelRow(-1);
   }
 }
 
 function handleDown() {
-  if (state.focusMode === "playeroverlay") {
-    switchChannel(1);
-    return;
-  }
-  if (state.focusMode === "player") {
+  if (state.focusMode === "playeroverlay" || state.focusMode === "player") {
     switchChannel(1);
   } else if (state.focusMode === "menu") {
     moveMenuFocus(1);
@@ -371,7 +498,7 @@ function handleDown() {
     moveCountryFocus(1);
   } else if (state.focusMode === "channellist") {
     moveChannelListFocus(1);
-  } else {
+  } else if (state.focusMode === "channels") {
     moveChannelRow(1);
   }
 }
@@ -384,9 +511,7 @@ function handleLeft() {
     } else {
       moveOverlayFocus(-1);
     }
-    return;
-  }
-  if (state.focusMode === "channels") {
+  } else if (state.focusMode === "channels") {
     if (state.colIndex === 0) {
       clearChannelFocus();
       state.focusMode = "menu";
@@ -411,20 +536,14 @@ function handleRight() {
   if (state.focusMode === "player") {
     showPlayerOverlay();
     state.focusMode = "playeroverlay";
-    return;
-  }
-  if (state.focusMode === "playeroverlay") {
+  } else if (state.focusMode === "playeroverlay") {
     moveOverlayFocus(1);
-    return;
-  }
-  if (state.focusMode === "menu") {
+  } else if (state.focusMode === "menu") {
     if (state.allCards.length > 0) {
       state.focusMode = "channels";
       setChannelFocus();
     }
-  } else if (state.focusMode === "submenu") {
-    // no-op
-  } else {
+  } else if (state.focusMode === "channels") {
     moveChannelCol(1);
   }
 }
@@ -433,11 +552,8 @@ function handleBack() {
   if (state.focusMode === "playeroverlay") {
     hidePlayerOverlay();
     state.focusMode = "player";
-    return;
-  }
-  if (state.focusMode === "player") {
-    hidePlayerOverlay();
-    stopPlayer();
+  } else if (state.focusMode === "player") {
+    exitPlayer();
   } else if (state.focusMode === "channels") {
     clearChannelFocus();
     state.focusMode = "menu";
@@ -455,7 +571,10 @@ function handleBack() {
   }
 }
 
-// Exported handler object for Remote
+// ================================================
+// Exports
+// ================================================
+
 export const handler = {
   onUp: () => handleUp(),
   onDown: () => handleDown(),
@@ -465,9 +584,7 @@ export const handler = {
   onBack: () => handleBack(),
 };
 
-export { addCountry };
-
-function addCountry(name, iconSrc) {
+export function addCountry(name, iconSrc) {
   var item = document.createElement("div");
   item.className = "country-item";
   item.tabIndex = -1;

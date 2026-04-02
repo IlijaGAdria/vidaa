@@ -46,15 +46,41 @@ class LoginScreen {
 
   }
 
+  showStatus(message, type) {
+    var el = document.getElementById("login-status");
+    if (!el) return;
+    el.textContent = message;
+    el.style.display = "block";
+    el.style.background = type === "error" ? "rgba(220,53,69,0.85)" : type === "success" ? "rgba(0,185,190,0.85)" : "rgba(255,193,7,0.85)";
+    el.style.color = "#fff";
+  }
+
   async handleLogin() {
 
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
 
-    const result = await login(username, password);
+    if (!username || !password) {
+      this.showStatus("Please enter your username and password.", "warn");
+      return;
+    }
 
-    if(result.success) {
-      this.app.showHome();
+    this.showStatus("Signing in...", "warn");
+
+    try {
+      const result = await login(username, password);
+
+      if (result && result.access_token) {
+        localStorage.setItem("access_token", result.access_token);
+        localStorage.setItem("stream_token", result.stream_token || "");
+        this.showStatus("Login successful! Loading...", "success");
+        this.app.showHome();
+      } else {
+        const msg = result && result.error ? result.error : (result && result.message ? result.message : "Login failed. Please check your credentials.");
+        this.showStatus(msg, "error");
+      }
+    } catch (err) {
+      this.showStatus("Connection error: " + err.message, "error");
     }
 
   }

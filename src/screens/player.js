@@ -1,7 +1,6 @@
 import state from "./state.js";
 
 var hlsInstance = null;
-var currentPlayerIndex = 0;
 
 function formatEpgTime(datetimeStr) {
   if (!datetimeStr) return "";
@@ -28,8 +27,27 @@ function updatePlayerOverlay(streamUrl) {
   var progressTime = document.getElementById("po-progress-time");
 
   if (numEl) numEl.textContent = ch && ch.num ? ch.num : "";
-  if (logoEl) logoEl.src = ch && ch.stream_icon ? ch.stream_icon : "";
+  if (logoEl) {
+    logoEl.src = ch && ch.stream_icon ? ch.stream_icon : "";
+    logoEl.onerror = function() { this.style.display = 'none'; };
+    logoEl.style.display = '';
+  }
   if (nameEl) nameEl.textContent = ch && ch.name ? ch.name : "Unknown";
+
+  // Reset favorite button for the new channel
+  var favBtn = document.getElementById("po-favorite");
+  if (favBtn) {
+    var isFav = ch && ch.favorite;
+    if (isFav) {
+      favBtn.innerHTML = '<i class="fa-solid fa-heart"></i> Added!';
+      favBtn.classList.add("active");
+      favBtn.dataset.favorited = "true";
+    } else {
+      favBtn.innerHTML = '<i class="fa-regular fa-heart"></i> Add to Favorites';
+      favBtn.classList.remove("active");
+      favBtn.dataset.favorited = "false";
+    }
+  }
 
   // Use embedded current_epg from channel data
   var epg = ch && ch.current_epg ? ch.current_epg : null;
@@ -61,26 +79,17 @@ function updatePlayerOverlay(streamUrl) {
   }
 }
 
+// Start playing a stream (video only — no UI management)
 export function playChannel(streamUrl) {
   var playerDiv = document.getElementById("video-player");
   var videoEl = document.getElementById("video-el");
   if (!playerDiv || !videoEl || !streamUrl) return;
 
-  // Hide UI
-  document.querySelector("header").style.display = "none";
-  document.getElementById("menu").style.display = "none";
-  document.querySelector(".channels-section").style.display = "none";
-  if (state.subMenu) state.subMenu.style.display = "none";
-  if (state.countrySubMenu) state.countrySubMenu.style.display = "none";
-  if (state.channelList) state.channelList.style.display = "none";
-
   playerDiv.classList.add("active");
   updatePlayerOverlay(streamUrl);
 
   if (window.Hls && Hls.isSupported()) {
-    if (hlsInstance) {
-      hlsInstance.destroy();
-    }
+    if (hlsInstance) hlsInstance.destroy();
     hlsInstance = new Hls();
     hlsInstance.loadSource(streamUrl);
     hlsInstance.attachMedia(videoEl);
@@ -91,21 +100,19 @@ export function playChannel(streamUrl) {
     videoEl.src = streamUrl;
     videoEl.play();
   }
-
-  state.focusMode = "player";
 }
 
+// Switch channel using the active playlist
 export function switchChannel(direction) {
-  var newIndex = currentPlayerIndex + direction;
-  if (newIndex < 0) newIndex = state.allCards.length - 1;
-  else if (newIndex >= state.allCards.length) newIndex = 0;
-  var card = state.allCards[newIndex];
-  if (card && card.dataset.stream) {
-    currentPlayerIndex = newIndex;
-    playChannel(card.dataset.stream);
-  }
+  if (!state.activePlaylist || state.activePlaylist.length === 0) return;
+  var newIndex = state.activePlaylistIndex + direction;
+  if (newIndex < 0) newIndex = state.activePlaylist.length - 1;
+  else if (newIndex >= state.activePlaylist.length) newIndex = 0;
+  state.activePlaylistIndex = newIndex;
+  playChannel(state.activePlaylist[newIndex]);
 }
 
+// Stop playback (video only — no UI management)
 export function stopPlayer() {
   var playerDiv = document.getElementById("video-player");
   var videoEl = document.getElementById("video-el");
@@ -119,20 +126,6 @@ export function stopPlayer() {
     videoEl.removeAttribute("src");
   }
   if (playerDiv) playerDiv.classList.remove("active");
-
-  // Restore UI
-  document.querySelector("header").style.display = "";
-  document.getElementById("menu").style.display = "";
-  document.querySelector(".channels-section").style.display = "";
-  if (state.subMenu) state.subMenu.style.display = "";
-  if (state.countrySubMenu) state.countrySubMenu.style.display = "";
-  if (state.channelList) state.channelList.style.display = "";
-
-  state.focusMode = "channels";
-}
-
-export function setCurrentPlayerIndex(idx) {
-  currentPlayerIndex = idx;
 }
 
 export function togglePause() {
@@ -146,4 +139,16 @@ export function togglePause() {
     videoEl.pause();
     if (pauseBtn) pauseBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
   }
+}
+
+// Get the currently playing channel data
+export function getCurrentChannel() {
+  var streamUrl = state.activePlaylist[state.activePlaylistIndex];
+  if (!streamUrl) return null;
+  for (var i = 0; i < state.channelsData.length; i++) {
+    if (state.channelsData[i].src === streamUrl) {
+      return state.channelsData[i];
+    }
+  }
+  return null;
 }

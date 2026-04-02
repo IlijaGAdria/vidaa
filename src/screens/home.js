@@ -18,9 +18,9 @@ function addChannel(name, time, thumbnail, logo, streamUrl) {
   card.className = "channel-card";
   card.dataset.stream = streamUrl || "";
   card.innerHTML = `
-    <img class="thumbnail" src="${thumbnail}" alt="${name} thumbnail">
+    <img class="thumbnail" src="${thumbnail}" alt="${name} thumbnail" onerror="this.style.display='none'">
     <div class="info">
-      <img class="logo" src="${logo}" alt="${name} logo">
+      <img class="logo" src="${logo}" alt="${name} logo" onerror="this.style.display='none'">
       <div class="details">
         <div class="name">${name}</div>
         <div class="time">${time}</div>

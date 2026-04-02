@@ -1,7 +1,7 @@
 // Shared state for the home screen modules
 
 const state = {
-  // Focus mode: "menu", "channels", "submenu", "countrysubmenu", "player"
+  // Focus mode: "menu", "channels", "submenu", "countrysubmenu", "channellist", "player", "playeroverlay"
   focusMode: "menu",
 
   // Menu state
@@ -34,9 +34,15 @@ const state = {
   channelListItems: [],
   channelListWrapper: null,
   channelListIndex: 0,
+  channelListType: null, // "favorites" or "category"
 
   // Raw channel data from API
   channelsData: [],
+
+  // Player state
+  previousFocusMode: null,   // where the user was before entering player
+  activePlaylist: [],         // stream URLs for current player session
+  activePlaylistIndex: 0,    // current index in activePlaylist
 
   // Player overlay state
   playerOverlay: null,
