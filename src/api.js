@@ -225,3 +225,33 @@ export async function fetchFavorites() {
     throw error;
   }
 }
+
+// Prints customer centar section inside login page
+export async function getInfo() {
+  try {
+    const response = await fetch(`${API_URL}/info?language_id=undefined`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer null", // No token for this endpoint
+        "device-mac": "a1:b2:c3:d4:e5",
+        "device-uid": "webbrowser",
+        "language-id": "null",
+        "pn-token": "null",
+        "reskin": reskin,
+        "x-api-auth": "2124584bd2314798d3e0bdc34b0764b20c6bea94b539f34f11f2ee9fc3c0dc3e"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+}

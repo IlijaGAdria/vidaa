@@ -168,15 +168,15 @@ function moveChannelRow(direction) {
 // ================================================
 
 var categoryMap = {
-  "Music": "Muzički",
-  "News": "Informativni",
-  "Sports": "Sportski",
-  "Movies": "Filmski",
-  "Children": "Dečiji",
-  "Documentaries": "Dokumentarni",
-  "Entertainment": "Zabavni",
-  "Reality": "Reality",
-  "General": "Generalni",
+  "sub-music": "Muzički",
+  "sub-news": "Informativni",
+  "sub-sports": "Sportski",
+  "sub-movies": "Filmski",
+  "sub-children": "Dečiji",
+  "sub-documentaries": "Dokumentarni",
+  "sub-entertainment": "Zabavni",
+  "sub-reality": "Reality",
+  "sub-general": "Generalni",
 };
 
 function showChannelList(categoryName) {
@@ -424,7 +424,7 @@ function handleEnter() {
   // Main menu
   if (state.focusMode === "menu") {
     var selectedItem = state.items[state.selectedIndex];
-    if (selectedItem && selectedItem.textContent.trim() === "TV Channels") {
+    if (selectedItem && selectedItem.id === "menu-tv-channels") {
       enterTVChannels();
     }
     return;
@@ -443,18 +443,18 @@ function handleEnter() {
 
   // Sub-menu — open category, favorites, or country submenu
   if (state.focusMode === "submenu") {
-    var label = state.subItems[state.subIndex].textContent.trim();
-    if (label === "Internet TV") {
+    var itemId = state.subItems[state.subIndex].id;
+    if (itemId === "sub-internet-tv") {
       showCountrySubMenu();
       state.focusMode = "countrysubmenu";
-    } else if (label === "All") {
+    } else if (itemId === "sub-all") {
       showChannelList(null);
       state.focusMode = "channellist";
-    } else if (label === "Favorites") {
+    } else if (itemId === "sub-favorites") {
       showFavoritesList();
       state.focusMode = "channellist";
-    } else if (categoryMap[label]) {
-      showChannelList(categoryMap[label]);
+    } else if (categoryMap[itemId]) {
+      showChannelList(categoryMap[itemId]);
       state.focusMode = "channellist";
     }
     return;

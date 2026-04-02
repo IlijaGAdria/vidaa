@@ -1,42 +1,71 @@
 
+
 <style>
 
-.footer {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  padding: 20px;
-  background: #222;
-  color: white;
-  font-family: Arial;
-}
+    .box{
+        border: 1px solid rgb(255, 255, 255);
+        max-width: 30%;
+        margin: 2%;
+    }
 
-.footer-left {
-  display: flex;
-  gap: 40px;
-}
+    .content{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        height: 100vh;
 
-.footer-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.8vw;
-  color: white;
-}
+        background-image: url('../public/assets/background-login.png');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
 
-.footer-right {
-  display: flex;
-  align-items: center;
-}
+    /* footer */
+
+    .footer {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        padding: 20px;
+        background: #222;
+        color: white;
+        font-weight: 200;
+    }
+
+    .footer-left {
+        display: flex;
+        gap: 40px;
+    }
+
+    .footer-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1.8vw;
+        color: white;
+    }
+
+    .footer-right {
+        display: flex;
+        align-items: center;
+    }
+
+    /* login */
+    .login {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+        padding: 30px 40px;
+        width: 100%;
+    }
 
 </style>
 
-<!-- Login Background -->
-<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background-image: url('../public/assets/background-login.png'); background-size: cover; background-repeat: no-repeat; background-position: center; z-index: -1;"></div>
 
 <!-- Header -->
 <header style="position: fixed; top: 0; left: 0; width: 100%; height: 80px; background-color: transparent; display: flex; align-items: center; padding-left: 20px; padding-right: 20px; justify-content: space-between; z-index: 10;">
-  <img src="assets/logo.png" alt="Logo" style="height: 3vw; width: auto; margin-top: 3vw; margin-left: 2vw;">
+  <img src="public/assets/logo.png" alt="Logo" style="height: 3vw; width: auto; margin-top: 3vw; margin-left: 2vw;">
 
   <div class="date-box">
     <div class="date-box-left">
@@ -54,75 +83,71 @@
   </div>
 </header>
 
+<div class="content">
 
-<div style="display: flex; justify-content: space-between; margin-top: 4%;">
+    <!-- Mobile Registration Section -->
+    <div class="box"> 
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <img style="height: 6.6vw; width: auto;" src="public/assets/icon-mobile.png" alt="Mobile Icon" >
+            <h1 style="color: white; font-size: 2.4vw;" >Register with mobile phone</h1>
+        </div>
+        <div style="background-color: white; border: 1px solid white; display: block; width: 10vw; height: 10vw; margin: 0 auto;"></div>
+        <p style="color: white; font-size: 1.8vw;">Scan the QR code to access the registration website via your mobile phone or type the url into the browser</p>
 
-<!-- Left Section -->
-<div style="max-width: 30%; margin-left: 4%; margin-top: 16vh;">
-  <div style="display: flex; align-items: center; gap: 16px;">
-    <img style="height: 6.6vw; width: auto;" src="assets/icon-mobile.png" alt="Mobile Icon" >
-    <h1 style="color: white; font-size: 2.4vw;" >Register with mobile phone</h1>
-  </div>
-  <div style="background-color: white; border: 1px solid white; display: block; width: 10vw; height: 10vw; margin: 0 auto;"></div>
-  <p style="color: white; font-size: 1.8vw;">Scan the QR code to access the registration website via your mobile phone or type the url into the browser</p>
-</div>
+    </div>
 
-<!-- Right Section -->
-<div style="max-width: 30%; margin-right: 4%; margin-top: 16vh;">
-  <div style="display: flex; align-items: center; gap: 16px;">
-    <img style="height: 6.6vw; width: auto;" src="assets/icon-customer.png" alt="Mobile Icon" >
-    <h1 style="color: white; font-size: 2.4vw; margin-left: 4vw;" >Customer center</h1>
+    <!-- Login Section -->
+    <div class="box login" id="login-section">
 
-  </div>
+        <h1 style="color: white; font-size: 2.2vw; text-align: center; font-weight: 500; margin-bottom: 10px;">Sign In</h1>
+        <input id="username" placeholder="Phone number or Username" style="padding: 14px 16px; width: 100%; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1.1vw; outline: none; background: white;">
+        <input id="password" type="password" placeholder="Password" style="padding: 14px 16px; width: 100%; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1.1vw; outline: none; background: white;">
+        <button id="loginBtn" style="padding: 14px; width: 100%; background-color: #555; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.2vw; box-sizing: border-box; letter-spacing: 0.5px;">Confirm</button>
 
-  <div style="display: flex; justify-content: space-between; height: 4vw;">
+        <div id="login-status" style="width: 100%; padding: 10px 14px; border-radius: 6px; font-size: 1vw; text-align: center; display: none; box-sizing: border-box;"></div>
 
-      <div style="width: 4vw; border: 1px solid white;"></div>
-      <p style="color: white; font-size: 1.6vw;">Austria</p>
-      <p style="color: white; font-size: 1.6vw;">+43 720 022 706</p>
+        <h1 style="color: white; font-size: 1.6vw; text-align: center; font-weight: 500; margin-bottom: 10px; margin-top: 4vw;">User do not have account</h1>
+        <button id="registerBtn" style="padding: 14px; width: 80%; background-color: #555; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.2vw; box-sizing: border-box; letter-spacing: 0.5px;">Sign up now!</button>
+    
+    </div>
 
-   </div>
+    <!-- Registration Section -->
+    <div class="box login" id="registration-section" style="display: none;">
 
-   <div style="display: flex; justify-content: space-between; height: 4vw;">
+        <h1 style="color: white; font-size: 2.2vw; text-align: center; font-weight: 500; margin-bottom: 10px;">Registration</h1>
+        <input id="username" placeholder="*First and Last name" style="padding: 14px 16px; width: 100%; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1.1vw; outline: none; background: white;">
+        <input id="password" type="password" placeholder="*Phone number in format like: +436677985748" style="padding: 14px 16px; width: 100%; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1.1vw; outline: none; background: white;">
+        <button id="confirmRegBtn" style="padding: 14px; width: 100%; background-color: #555; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.2vw; box-sizing: border-box; letter-spacing: 0.5px;">Confirm</button>
 
-      <div style="width: 4vw; border: 1px solid white;"></div>
-      <p style="color: white; font-size: 1.6vw;">Austria</p>
-      <p style="color: white; font-size: 1.6vw;">+43 720 022 478</p>
+        <label style="color: white; font-size: 1.2vw; display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" name="terms" value="agree" style="width: 2.4vw; height: 2.4vw; flex-shrink: 0;"> I agree with <span style="color: #11b8d5;">Terms of Use</span>
+        </label>
 
-   </div>
+        <h1 style="color: white; font-size: 1.6vw; text-align: center; font-weight: 500; margin-bottom: 10px;">*Mandatory data entry</h1>
+    
+    </div>
 
-   <div style="display: flex; justify-content: space-between; height: 4vw;">
 
-      <div style="width: 4vw; border: 1px solid white;"></div>
-      <p style="color: white; font-size: 1.6vw;">Germany</p>
-      <p style="color: white; font-size: 1.6vw;">+49 8937040018</p>
+    <!-- Customer Center Section -->
+    <div class="box">
+        
+        <div style="display: flex; align-items: center; gap: 16px;">
 
-   </div>
+            <img style="height: 6.6vw; width: auto;" src="public/assets/icon-customer.png" alt="Mobile Icon" >
+            <h1 style="color: white; font-size: 2.4vw; margin-left: 4vw;" >Customer center</h1>
 
-   <div style="display: flex; justify-content: space-between; height: 4vw;">
+        </div>
 
-      <div style="width: 4vw; border: 1px solid white;"></div>
-      <p style="color: white; font-size: 1.6vw;">Sweden</p>
-      <p style="color: white; font-size: 1.6vw;">+46 850780146</p>
+        <div id="customer-center-phones" style="display: flex; flex-direction: column; gap: 0.5vw;"></div>
 
-   </div>
+    </div>
 
-</div>
-
-</div>
-
-<!-- Login Section -->
-<div class="login" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; gap: 15px; align-items: center; background: transparent; padding: 40px; border-radius: 8px; z-index: 1;">
-  <h1 style="color: white; font-size: 28px; margin: 0 0 20px 0; font-weight: 600;">Sign In</h1>
-  <input id="username" placeholder="Phone number or Username" style="padding: 10px; width: 250px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-  <input id="password" type="password" placeholder="Password" style="padding: 10px; width: 250px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-  <button id="loginBtn" style="padding: 10px; width: 250px; background-color: hsl(268, 100%, 11%); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; box-sizing: border-box;">Confirm</button>
 </div>
 
 
-<p style="position: fixed; bottom: 20px; color: white; font-size: 1.8vw; margin-bottom: 4vw; left: 50%;
-transform: translateX(-50%); text-align: center; width: 80%;">If you need help creating an account, trial period or registering a user account, call the customer center</p>
+<!-- footer -->
 
+<p style="position: fixed; bottom: 20px; color: white; font-size: 1.8vw; margin-bottom: 4vw; left: 50%; transform: translateX(-50%); text-align: center; width: 80%;">If you need help creating an account, trial period or registering a user account, call the customer center</p>
 
 <footer style="border-top: 1px solid #4e4e4e; position: fixed; bottom: 0; left: 0; width: 100%; height: 80px; background-color: transparent; display: flex; align-items: center; padding-left: 20px; padding-right: 20px; justify-content: space-between; z-index: 10;">
 
@@ -147,3 +172,4 @@ transform: translateX(-50%); text-align: center; width: 80%;">If you need help c
   </div>
 
 </footer>
+
