@@ -1,8 +1,8 @@
-import { getChannels } from "../api.js";
+import { getChannels, getInternetChannelFilters } from "../api.js";
 import Remote from "../remote.js";
 import { fetchWeather } from "../weather_api.js";
 import state from "./state.js";
-import { handler, addCountry } from "./navigation.js";
+import { handler, loadInternetCountries } from "./navigation.js";
 
 // Format EPG datetime string to HH:MM
 function formatEpgTime(datetimeStr) {
@@ -79,8 +79,15 @@ class HomeScreen {
     state.countrySubMenu.appendChild(state.countryWrapper);
     state.countryItems = Array.from(state.countrySubMenu.querySelectorAll(".country-item"));
 
-    addCountry("Serbia");
-    addCountry("Croatia");
+    // Load Internet TV countries from API
+    getInternetChannelFilters().then(function(data) {
+      if (data && data.countries) {
+        state.internetCountries = data.countries;
+        loadInternetCountries(data.countries);
+      }
+    }).catch(function(err) {
+      console.error("Failed to load internet channel filters:", err);
+    });
 
     // Setup channel list
     state.channelList = document.getElementById("channel-list");

@@ -34,7 +34,11 @@ const state = {
   channelListItems: [],
   channelListWrapper: null,
   channelListIndex: 0,
-  channelListType: null, // "favorites" or "category"
+  channelListType: null, // "favorites", "category", or "internet"
+
+  // Internet TV state
+  internetCountries: [],
+  internetChannelsData: [],
 
   // Raw channel data from API
   channelsData: [],

@@ -255,3 +255,92 @@ export async function getInfo() {
     console.error("Fetch error:", error);
   }
 }
+
+
+export async function getInternetChannelFilters() {
+  try {
+    const response = await fetch(`${API_URL}/internet-channels/filters`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "X-API-AUTH": "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
+        "Language-Id": String(getLanguage()),
+        "Device-Uid": localStorage.getItem("device_id") || "webbrowser",
+        "Reskin": reskin
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Filters:", data);
+    return data;
+
+  } catch (error) {
+    console.error("Request failed:", error);
+  }
+}
+
+export async function getM3uChannels(countryId = 196) {
+  try {
+    const response = await fetch(`${API_URL}/m3u/channels/?country_id=${countryId}`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "X-API-AUTH": "b16cf34aeb587180773910bc632801b15d192286398b8000011adaa1e86f8f6b",
+        "Device-Mac": "a1:b2:c3:d4:e5",
+        "Device-Uid": localStorage.getItem("device_id") || "webbrowser",
+        "Language-Id": String(getLanguage()),
+        "Pn-Token": "null",
+        "Reskin": "adria"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("M3U channels:", data);
+    return data;
+
+  } catch (error) {
+    console.error("Request failed:", error);
+    throw error;
+  }
+}
+
+export async function getChannelCategories(channelId) {
+  try {
+    const response = await fetch(`${API_URL}/channel/categories/${channelId}`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "X-API-AUTH": "9c8c3285ee3bf67ba5f552d935eec1ad2bd81d22bff54e1b306c8cecabc247a1",
+        "Device-Mac": "a1:b2:c3:d4:e5",
+        "Device-Uid": localStorage.getItem("device_id") || "webbrowser",
+        "Language-Id": String(getLanguage()),
+        "Pn-Token": "null",
+        "Reskin": "adria"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Channel categories:", data);
+    return data;
+
+  } catch (error) {
+    console.error("Request failed:", error);
+    throw error;
+  }
+}
+

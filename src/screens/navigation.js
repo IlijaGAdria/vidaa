@@ -1,6 +1,6 @@
 import state from "./state.js";
 import { playChannel, switchChannel, stopPlayer, togglePause, getCurrentChannel } from "./player.js";
-import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel } from "../api.js";
+import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel, getM3uChannels } from "../api.js";
 
 // ================================================
 // DOM Helpers
@@ -71,14 +71,18 @@ function moveSubFocus(direction) {
 
 function showCountrySubMenu() {
   if (state.countrySubMenu) state.countrySubMenu.classList.add("visible");
-  state.countryIndex = 0;
   state.countryItems.forEach(function(item) {
     item.classList.remove("active");
     item.tabIndex = -1;
   });
-  if (state.countryItems[0]) {
-    state.countryItems[0].classList.add("active");
-    state.countryItems[0].tabIndex = 0;
+  var idx = state.countryIndex || 0;
+  if (idx >= state.countryItems.length) idx = 0;
+  state.countryIndex = idx;
+  if (state.countryItems[idx]) {
+    state.countryItems[idx].classList.add("active");
+    state.countryItems[idx].tabIndex = 0;
+    var topIdx = Math.max(0, idx - 3);
+    state.countryWrapper.style.transform = "translateY(" + (-state.countryItems[topIdx].offsetTop) + "px)";
   }
 }
 
@@ -228,13 +232,13 @@ function renderChannelList(channels) {
   }
   state.channelListItems = [];
 
-  channels.forEach(function(ch) {
+  channels.forEach(function(ch, idx) {
     var item = document.createElement("div");
     item.className = "channel-list-item";
     item.tabIndex = -1;
-    item.dataset.stream = ch.src || "";
+    item.dataset.stream = ch.src || ch.stream_path || "";
     item.innerHTML =
-      '<span class="cl-number">' + (ch.num || "") + '.</span>' +
+      '<span class="cl-number">' + (ch.num || (idx + 1)) + '.</span>' +
       '<img class="cl-icon" src="' + (ch.stream_icon || "") + '" alt="" onerror="this.style.display=\'none\'">' +
       '<span class="cl-name">' + (ch.name || "") + '</span>' +
       '<i class="fa-solid fa-circle-play cl-play"></i>';
@@ -256,7 +260,10 @@ function renderChannelList(channels) {
 }
 
 function hideChannelList() {
-  if (state.channelList) state.channelList.classList.remove("visible");
+  if (state.channelList) {
+    state.channelList.classList.remove("visible");
+    state.channelList.classList.remove("shifted");
+  }
 }
 
 function moveChannelListFocus(direction) {
@@ -313,11 +320,19 @@ function exitPlayer() {
   var returnTo = state.previousFocusMode || "channels";
 
   if (returnTo === "channellist") {
-    // Came from channel list (favorites or category) — restore that view
+    // Came from channel list (favorites, category, or internet) — restore that view
     minimizeMenu();
     hideChannelsSection();
     showSubMenu();
-    if (state.channelList) state.channelList.classList.add("visible");
+    if (state.channelListType === "internet") {
+      if (state.countrySubMenu) state.countrySubMenu.classList.add("visible");
+    }
+    if (state.channelList) {
+      state.channelList.classList.add("visible");
+      if (state.channelListType === "internet") {
+        state.channelList.classList.add("shifted");
+      }
+    }
     // Refresh the list if it was favorites (may have changed)
     if (state.channelListType === "favorites") {
       showFavoritesList();
@@ -460,6 +475,51 @@ function handleEnter() {
     return;
   }
 
+  // Country sub-menu — select country to load m3u channels
+  if (state.focusMode === "countrysubmenu") {
+    var countryItem = state.countryItems[state.countryIndex];
+    if (countryItem && countryItem.dataset.countryId) {
+      var countryId = parseInt(countryItem.dataset.countryId, 10);
+      state.channelListType = "internet";
+
+      getM3uChannels(countryId).then(function(data) {
+        var channels = (data && data.channels) ? data.channels : (Array.isArray(data) ? data : []);
+        if (channels.length === 0) {
+          console.log("[Internet TV] No channels for country:", countryId);
+          // Show empty message
+          while (state.channelListWrapper.firstChild) {
+            state.channelListWrapper.removeChild(state.channelListWrapper.firstChild);
+          }
+          state.channelListItems = [];
+          var msg = document.createElement("div");
+          msg.style.cssText = "color: rgba(255,255,255,0.6); font-size: 2vw; padding: 2vw; text-align: center; width: 100%; display: flex; align-items: center; justify-content: center; height: 40vh;";
+          msg.textContent = "No available channels";
+          state.channelListWrapper.appendChild(msg);
+          if (state.channelList) {
+            state.channelList.classList.add("visible");
+            state.channelList.classList.add("shifted");
+          }
+          return;
+        }
+        state.internetChannelsData = channels;
+        // Clear wrapper before rendering
+        while (state.channelListWrapper.firstChild) {
+          state.channelListWrapper.removeChild(state.channelListWrapper.firstChild);
+        }
+        state.channelListItems = [];
+        if (state.channelList) {
+          state.channelList.classList.add("visible");
+          state.channelList.classList.add("shifted");
+        }
+        renderChannelList(channels);
+        state.focusMode = "channellist";
+      }).catch(function(err) {
+        console.error("Failed to load m3u channels:", err);
+      });
+    }
+    return;
+  }
+
   // Channel list — enter player with filtered list as playlist
   if (state.focusMode === "channellist") {
     var item = state.channelListItems[state.channelListIndex];
@@ -520,7 +580,11 @@ function handleLeft() {
     }
   } else if (state.focusMode === "channellist") {
     hideChannelList();
-    state.focusMode = "submenu";
+    if (state.channelListType === "internet") {
+      state.focusMode = "countrysubmenu";
+    } else {
+      state.focusMode = "submenu";
+    }
   } else if (state.focusMode === "countrysubmenu") {
     hideCountrySubMenu();
     state.focusMode = "submenu";
@@ -559,7 +623,11 @@ function handleBack() {
     state.focusMode = "menu";
   } else if (state.focusMode === "channellist") {
     hideChannelList();
-    state.focusMode = "submenu";
+    if (state.channelListType === "internet") {
+      state.focusMode = "countrysubmenu";
+    } else {
+      state.focusMode = "submenu";
+    }
   } else if (state.focusMode === "countrysubmenu") {
     hideCountrySubMenu();
     state.focusMode = "submenu";
@@ -584,13 +652,20 @@ export const handler = {
   onBack: () => handleBack(),
 };
 
-export function addCountry(name, iconSrc) {
-  var item = document.createElement("div");
-  item.className = "country-item";
-  item.tabIndex = -1;
-  item.innerHTML = '<span class="country-icon">' +
-    (iconSrc ? '<img src="' + iconSrc + '" style="width:100%;height:100%;object-fit:cover;border-radius:3px;">' : '') +
-    '</span>' + name;
-  state.countryWrapper.appendChild(item);
+export function loadInternetCountries(countries) {
+  // Clear existing country items
+  while (state.countryWrapper.firstChild) {
+    state.countryWrapper.removeChild(state.countryWrapper.firstChild);
+  }
+  countries.forEach(function(c) {
+    var item = document.createElement("div");
+    item.className = "country-item";
+    item.tabIndex = -1;
+    item.dataset.countryId = c.id;
+    item.innerHTML = '<span class="country-icon">' +
+      (c.flag ? '<img src="' + c.flag + '" style="width:100%;height:100%;object-fit:cover;border-radius:3px;">' : '') +
+      '</span>' + c.name;
+    state.countryWrapper.appendChild(item);
+  });
   state.countryItems = Array.from(state.countrySubMenu.querySelectorAll(".country-item"));
 }

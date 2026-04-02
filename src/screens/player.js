@@ -12,10 +12,20 @@ function formatEpgTime(datetimeStr) {
 
 function updatePlayerOverlay(streamUrl) {
   var ch = null;
+  // Search regular channels
   for (var i = 0; i < state.channelsData.length; i++) {
     if (state.channelsData[i].src === streamUrl) {
       ch = state.channelsData[i];
       break;
+    }
+  }
+  // Search internet/m3u channels if not found
+  if (!ch && state.internetChannelsData) {
+    for (var j = 0; j < state.internetChannelsData.length; j++) {
+      if (state.internetChannelsData[j].stream_path === streamUrl) {
+        ch = state.internetChannelsData[j];
+        break;
+      }
     }
   }
   var numEl = document.getElementById("po-channel-num");
@@ -96,6 +106,15 @@ export function playChannel(streamUrl) {
     hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
       videoEl.play();
     });
+    hlsInstance.on(Hls.Events.ERROR, function(event, data) {
+      if (data.fatal) {
+        console.warn("[Player] HLS fatal error, falling back to direct playback:", data.type);
+        hlsInstance.destroy();
+        hlsInstance = null;
+        videoEl.src = streamUrl;
+        videoEl.play();
+      }
+    });
   } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {
     videoEl.src = streamUrl;
     videoEl.play();
@@ -148,6 +167,14 @@ export function getCurrentChannel() {
   for (var i = 0; i < state.channelsData.length; i++) {
     if (state.channelsData[i].src === streamUrl) {
       return state.channelsData[i];
+    }
+  }
+  // Search internet/m3u channels
+  if (state.internetChannelsData) {
+    for (var j = 0; j < state.internetChannelsData.length; j++) {
+      if (state.internetChannelsData[j].stream_path === streamUrl) {
+        return state.internetChannelsData[j];
+      }
     }
   }
   return null;
