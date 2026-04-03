@@ -344,3 +344,62 @@ export async function getChannelCategories(channelId) {
   }
 }
 
+
+export async function getBackgroundImages() {
+  try {
+    const response = await fetch(`${API_URL}/background-images`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "x-api-auth": "33989334f4547289aa5e95e4ec927ed2829b86c4dfba6f0e70e369a9437c9f42",
+        "language-id": "1",
+        "device-mac": "a1:b2:c3:d4:e5",
+        "device-uid": localStorage.getItem("device_id") || "webbrowser",
+        "reskin": reskin
+        
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(data);
+    return data;
+
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+}
+
+export async function getUser() {
+  try {
+    const response = await fetch(`${API_URL}/user`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "x-api-auth": "6c61c2382968becd538d8b2991dbca357546842a8fd08261cc264b5b6e4ac29a",
+        "language-id": "1",
+        "device-mac": "a1:b2:c3:d4:e5",
+        "device-uid": localStorage.getItem("device_id") || "webbrowser",
+        "reskin": reskin
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(data);
+    return data;
+
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+}
+
+
