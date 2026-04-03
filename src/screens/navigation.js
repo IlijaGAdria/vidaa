@@ -633,6 +633,9 @@ function playRadio(streamUrl, radioObj) {
   }
 
   // Show the panel and start animation
+  // Reset panel button focus state
+  state.radioPanelIndex = 0;
+  state.radioPanelBtns.forEach(function(btn) { if (btn) btn.classList.remove("active"); });
   showRadioPanel();
 }
 
@@ -644,6 +647,9 @@ function stopRadio() {
   state.radioPlaying = null;
   var bars = document.getElementById("radio-panel-bars");
   if (bars) bars.classList.add("paused");
+  // Clear panel button focus
+  state.radioPanelIndex = 0;
+  state.radioPanelBtns.forEach(function(btn) { if (btn) btn.classList.remove("active"); });
   hideRadioPanel();
   state.focusMode = "channellist";
 }
