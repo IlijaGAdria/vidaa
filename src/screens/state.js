@@ -1,7 +1,7 @@
 // Shared state for the home screen modules
 
 const state = {
-  // Focus mode: "menu", "channels", "submenu", "countrysubmenu", "channellist", "player", "playeroverlay"
+  // Focus mode: "menu", "channels", "submenu", "countrysubmenu", "channellist", "player", "playeroverlay", "radiosubmenu", "radiopanel"
   focusMode: "menu",
 
   // Menu state
@@ -23,6 +23,12 @@ const state = {
   subWrapper: null,
   subIndex: 0,
 
+  // Radio sub-menu state
+  radioSubMenu: null,
+  radioSubItems: [],
+  radioSubWrapper: null,
+  radioSubIndex: 0,
+
   // Country sub-menu state
   countrySubMenu: null,
   countryItems: [],
@@ -42,6 +48,16 @@ const state = {
 
   // Raw channel data from API
   channelsData: [],
+
+  // Radio stations data from API
+  radiosData: [],
+
+  // Radio player panel state
+  radioPanel: null,
+  radioPanelBtns: [],
+  radioPanelIndex: 0,
+  radioPlaying: null,       // currently playing radio object
+  radioAudio: null,          // Audio element for radio playback
 
   // Player state
   previousFocusMode: null,   // where the user was before entering player

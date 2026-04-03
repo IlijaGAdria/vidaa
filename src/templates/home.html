@@ -229,6 +229,162 @@
   opacity: 1;
 }
 
+/* Radio Now Playing Panel */
+
+.radio-panel {
+  position: fixed;
+  top: 40vh;
+  right: 2vw;
+  width: 20vw;
+  display: none;
+  z-index: 50;
+  color: white;
+}
+
+.radio-panel.visible {
+  display: block;
+}
+
+.radio-panel-inner {
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  border-radius: 1vw;
+  padding: 1.5vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1vw;
+}
+
+.radio-panel-icon {
+  font-size: 3vw;
+  color: #00b9be;
+}
+
+.radio-panel-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3vw;
+}
+
+.radio-panel-label {
+  font-size: 0.85vw;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.5);
+}
+
+.radio-panel-name {
+  font-size: 1.2vw;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 18vw;
+}
+
+.radio-panel-status {
+  font-size: 0.8vw;
+  font-weight: 500;
+  display: none;
+}
+
+.radio-panel-status.error {
+  display: block;
+  color: #ff5252;
+}
+
+.radio-panel-status.loading {
+  display: block;
+  color: rgba(255,255,255,0.5);
+}
+
+/* Sound wave animation */
+.radio-panel-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25vw;
+  height: 2vw;
+}
+
+.radio-panel-bars span {
+  display: block;
+  width: 0.35vw;
+  background: #00b9be;
+  border-radius: 0.15vw;
+  animation: radioBar 1s ease-in-out infinite;
+}
+
+.radio-panel-bars span:nth-child(1) { height: 0.6vw; animation-delay: 0s; }
+.radio-panel-bars span:nth-child(2) { height: 1.2vw; animation-delay: 0.15s; }
+.radio-panel-bars span:nth-child(3) { height: 1.8vw; animation-delay: 0.3s; }
+.radio-panel-bars span:nth-child(4) { height: 1.0vw; animation-delay: 0.45s; }
+.radio-panel-bars span:nth-child(5) { height: 1.4vw; animation-delay: 0.6s; }
+
+.radio-panel-bars.paused span {
+  animation-play-state: paused;
+}
+
+@keyframes radioBar {
+  0%, 100% { transform: scaleY(0.3); }
+  50%      { transform: scaleY(1); }
+}
+
+.radio-panel-actions {
+  display: flex;
+  gap: 0.8vw;
+  width: 100%;
+}
+
+.radio-panel-btn {
+  flex: 1;
+  padding: 0.6vw 0.8vw;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 0.5vw;
+  background: transparent;
+  color: #fff;
+  font-size: 0.9vw;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4vw;
+  transition: all 0.15s;
+}
+
+.radio-panel-btn.active {
+  border-color: #00b9be;
+  background: rgba(0, 185, 190, 0.25);
+  color: #00b9be;
+}
+
+.radio-panel-btn.fav-active {
+  color: #00b9be;
+}
+
+.channel-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2vw;
+  height: 40vh;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.channel-list-empty i {
+  font-size: 4vw;
+}
+
+.channel-list-empty span {
+  font-size: 1.4vw;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
 /* Channels */
 
 .channels-section {
@@ -676,6 +832,33 @@
 <div class="country-sub-menu" id="country-sub-menu">
 </div>
 
+<!-- Radio Sub Menu -->
+<div class="sub-menu" id="radio-sub-menu">
+  <div class="sub-item active" id="radio-all" tabindex="0"><span class="sub-icon">///</span>All</div>
+  <div class="sub-item" id="radio-favorites" tabindex="-1"><span class="sub-icon"><i class="fa-solid fa-heart-circle-plus"></i></span>Favorites</div>
+</div>
+
 <!-- Channel List (filtered category view) -->
 <div class="channel-list" id="channel-list">
+</div>
+
+<!-- Radio Now Playing Panel -->
+<div class="radio-panel" id="radio-panel">
+  <div class="radio-panel-inner">
+    <div class="radio-panel-icon">
+      <i class="fa-solid fa-radio"></i>
+    </div>
+    <div class="radio-panel-info">
+      <span class="radio-panel-label">Now Playing</span>
+      <span class="radio-panel-name" id="radio-panel-name">—</span>
+      <span class="radio-panel-status" id="radio-panel-status"></span>
+    </div>
+    <div class="radio-panel-bars paused" id="radio-panel-bars">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="radio-panel-actions">
+      <button class="radio-panel-btn" id="radio-btn-stop"><i class="fa-solid fa-stop"></i> Stop</button>
+      <button class="radio-panel-btn" id="radio-btn-fav"><i class="fa-regular fa-heart"></i> Favorite</button>
+    </div>
+  </div>
 </div>

@@ -1,6 +1,6 @@
 import state from "./state.js";
 import { playChannel, switchChannel, stopPlayer, togglePause, getCurrentChannel } from "./player.js";
-import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel, getM3uChannels } from "../api.js";
+import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel, getM3uChannels, getRadios } from "../api.js";
 
 // ================================================
 // DOM Helpers
@@ -63,6 +63,35 @@ function moveSubFocus(direction) {
   state.subItems[state.subIndex].classList.add("active");
   var topIdx = Math.max(0, state.subIndex - 3);
   state.subWrapper.style.transform = "translateY(" + (-state.subItems[topIdx].offsetTop) + "px)";
+}
+
+// ================================================
+// Radio sub-menu
+// ================================================
+
+function showRadioSubMenu() {
+  if (state.radioSubMenu) state.radioSubMenu.classList.add("visible");
+  state.radioSubItems.forEach(function(item) {
+    item.classList.remove("active");
+    item.tabIndex = -1;
+  });
+  if (state.radioSubItems[state.radioSubIndex]) {
+    state.radioSubItems[state.radioSubIndex].classList.add("active");
+    state.radioSubItems[state.radioSubIndex].tabIndex = 0;
+  }
+}
+
+function hideRadioSubMenu() {
+  if (state.radioSubMenu) state.radioSubMenu.classList.remove("visible");
+}
+
+function moveRadioSubFocus(direction) {
+  if (state.radioSubIndex + direction < 0 || state.radioSubIndex + direction >= state.radioSubItems.length) return;
+  state.radioSubItems[state.radioSubIndex].tabIndex = -1;
+  state.radioSubItems[state.radioSubIndex].classList.remove("active");
+  state.radioSubIndex += direction;
+  state.radioSubItems[state.radioSubIndex].tabIndex = 0;
+  state.radioSubItems[state.radioSubIndex].classList.add("active");
 }
 
 // ================================================
@@ -172,26 +201,36 @@ function moveChannelRow(direction) {
 // ================================================
 
 var categoryMap = {
-  "sub-music": "Muzički",
-  "sub-news": "Informativni",
-  "sub-sports": "Sportski",
-  "sub-movies": "Filmski",
-  "sub-children": "Dečiji",
-  "sub-documentaries": "Dokumentarni",
-  "sub-entertainment": "Zabavni",
-  "sub-reality": "Reality",
-  "sub-general": "Generalni",
+  "sub-adria-telekom": 25,
+  "sub-music": 2,
+  "sub-news": 8,
+  "sub-sports": 3,
+  "sub-movies": 4,
+  "sub-children": 5,
+  "sub-documentaries": 6,
+  "sub-entertainment": 1,
+  "sub-reality": 19,
+  "sub-general": 1,
+  "sub-4k-uhd": 21,
+  "sub-local": 16,
+  "sub-international-fta": 17,
+  "sub-camera": 18,
+  "sub-adult": 9,
+  "sub-vod": -1,
+  "sub-youtube": -2,
 };
 
-function showChannelList(categoryName) {
+function showChannelList(categoryId) {
   state.channelListType = "category";
   var filtered;
-  if (categoryName) {
+  if (categoryId) {
     filtered = state.channelsData.filter(function(ch) {
-      return ch.category && ch.category.category_name === categoryName;
+      return ch.category_ids && ch.category_ids.indexOf(categoryId) !== -1;
     });
   } else {
-    filtered = state.channelsData;
+    filtered = state.channelsData.filter(function(ch) {
+      return !ch.category_ids || ch.category_ids.indexOf(9) === -1;
+    });
   }
   renderChannelList(filtered);
 }
@@ -231,6 +270,15 @@ function renderChannelList(channels) {
     state.channelListWrapper.removeChild(state.channelListWrapper.firstChild);
   }
   state.channelListItems = [];
+
+  if (!channels || channels.length === 0) {
+    var empty = document.createElement("div");
+    empty.className = "channel-list-empty";
+    empty.innerHTML = '<i class="fa-solid fa-tv"></i><span>No available channels</span>';
+    state.channelListWrapper.appendChild(empty);
+    if (state.channelList) state.channelList.classList.add("visible");
+    return;
+  }
 
   channels.forEach(function(ch, idx) {
     var item = document.createElement("div");
@@ -287,8 +335,10 @@ function hideAllUI() {
   document.getElementById("menu").style.display = "none";
   document.querySelector(".channels-section").style.display = "none";
   if (state.subMenu) state.subMenu.style.display = "none";
+  if (state.radioSubMenu) state.radioSubMenu.style.display = "none";
   if (state.countrySubMenu) state.countrySubMenu.style.display = "none";
   if (state.channelList) state.channelList.style.display = "none";
+  if (state.radioPanel) state.radioPanel.style.display = "none";
 }
 
 // Restore all app UI elements (clear inline display overrides, let CSS classes decide)
@@ -297,8 +347,10 @@ function restoreAllUI() {
   document.getElementById("menu").style.display = "";
   document.querySelector(".channels-section").style.display = "";
   if (state.subMenu) state.subMenu.style.display = "";
+  if (state.radioSubMenu) state.radioSubMenu.style.display = "";
   if (state.countrySubMenu) state.countrySubMenu.style.display = "";
   if (state.channelList) state.channelList.style.display = "";
+  if (state.radioPanel) state.radioPanel.style.display = "";
 }
 
 // Enter the video player from any context
@@ -323,7 +375,11 @@ function exitPlayer() {
     // Came from channel list (favorites, category, or internet) — restore that view
     minimizeMenu();
     hideChannelsSection();
-    showSubMenu();
+    if (state.channelListType === "radio" || state.channelListType === "radio-favorites") {
+      showRadioSubMenu();
+    } else {
+      showSubMenu();
+    }
     if (state.channelListType === "internet") {
       if (state.countrySubMenu) state.countrySubMenu.classList.add("visible");
     }
@@ -336,6 +392,9 @@ function exitPlayer() {
     // Refresh the list if it was favorites (may have changed)
     if (state.channelListType === "favorites") {
       showFavoritesList();
+    }
+    if (state.channelListType === "radio-favorites") {
+      showRadioFavoritesList();
     }
     state.focusMode = "channellist";
   } else if (returnTo === "channels") {
@@ -400,6 +459,247 @@ function enterTVChannels() {
 }
 
 // ================================================
+// Radio Stations entry
+// ================================================
+
+function enterRadio() {
+  minimizeMenu();
+  setTimeout(function() {
+    var topIndex = Math.max(0, state.selectedIndex - 3);
+    state.wrapper.style.transform = "translateY(" + (-state.items[topIndex].offsetTop) + "px)";
+  }, 0);
+  showRadioSubMenu();
+  hideChannelsSection();
+  state.focusMode = "radiosubmenu";
+}
+
+function showRadioAllChannels() {
+  state.channelListType = "radio";
+  while (state.channelListWrapper.firstChild) {
+    state.channelListWrapper.removeChild(state.channelListWrapper.firstChild);
+  }
+  state.channelListItems = [];
+  if (state.channelList) state.channelList.classList.add("visible");
+
+  if (state.radiosData && state.radiosData.length > 0) {
+    renderRadioList(state.radiosData);
+    return;
+  }
+
+  getRadios().then(function(response) {
+    var radios = (response && response.data) ? response.data : (Array.isArray(response) ? response : []);
+    state.radiosData = radios;
+    renderRadioList(radios);
+  }).catch(function(err) {
+    console.error("Failed to load radios:", err);
+  });
+}
+
+function showRadioFavoritesList() {
+  state.channelListType = "radio-favorites";
+  while (state.channelListWrapper.firstChild) {
+    state.channelListWrapper.removeChild(state.channelListWrapper.firstChild);
+  }
+  state.channelListItems = [];
+  if (state.channelList) state.channelList.classList.add("visible");
+
+  var loadAndFilter = function(radios) {
+    var favRadios = radios.filter(function(r) { return r.favorite === true; });
+    renderRadioList(favRadios);
+  };
+
+  if (state.radiosData && state.radiosData.length > 0) {
+    loadAndFilter(state.radiosData);
+    return;
+  }
+
+  getRadios().then(function(response) {
+    var radios = (response && response.data) ? response.data : (Array.isArray(response) ? response : []);
+    state.radiosData = radios;
+    loadAndFilter(radios);
+  }).catch(function(err) {
+    console.error("Failed to load radio favorites:", err);
+  });
+}
+
+function renderRadioList(radios) {
+  while (state.channelListWrapper.firstChild) {
+    state.channelListWrapper.removeChild(state.channelListWrapper.firstChild);
+  }
+  state.channelListItems = [];
+
+  if (!radios || radios.length === 0) {
+    var empty = document.createElement("div");
+    empty.className = "channel-list-empty";
+    empty.innerHTML = '<i class="fa-solid fa-radio"></i><span>No available radio stations</span>';
+    state.channelListWrapper.appendChild(empty);
+    if (state.channelList) state.channelList.classList.add("visible");
+    return;
+  }
+
+  radios.forEach(function(r, idx) {
+    var item = document.createElement("div");
+    item.className = "channel-list-item";
+    item.tabIndex = -1;
+    item.dataset.stream = r.stream_source || "";
+    item.innerHTML =
+      '<span class="cl-number">' + (idx + 1) + '.</span>' +
+      '<img class="cl-icon" src="' + (r.stream_icon || "") + '" alt="" onerror="this.style.display=\'none\'">' +
+      '<span class="cl-name">' + (r.name || "") + '</span>' +
+      '<i class="fa-solid fa-circle-play cl-play"></i>';
+    state.channelListWrapper.appendChild(item);
+  });
+
+  state.channelListItems = Array.from(state.channelList.querySelectorAll(".channel-list-item"));
+  if (state.channelList) state.channelList.classList.add("visible");
+  state.channelListIndex = 0;
+
+  state.channelListItems.forEach(function(item) {
+    item.classList.remove("active");
+    item.tabIndex = -1;
+  });
+  if (state.channelListItems[0]) {
+    state.channelListItems[0].classList.add("active");
+    state.channelListItems[0].tabIndex = 0;
+  }
+}
+
+// ================================================
+// Radio inline playback
+// ================================================
+
+function playRadio(streamUrl, radioObj) {
+  if (!streamUrl) return;
+  // Stop any existing radio playback
+  if (state.radioAudio) {
+    state.radioAudio.pause();
+    state.radioAudio.removeAttribute("src");
+  }
+
+  state.radioPlaying = radioObj;
+
+  // Update panel info
+  var nameEl = document.getElementById("radio-panel-name");
+  if (nameEl) nameEl.textContent = radioObj ? (radioObj.name || "Radio") : "Radio";
+
+  // Show loading status
+  var statusEl = document.getElementById("radio-panel-status");
+  if (statusEl) {
+    statusEl.textContent = "Connecting...";
+    statusEl.className = "radio-panel-status loading";
+  }
+  var bars = document.getElementById("radio-panel-bars");
+  if (bars) bars.classList.add("paused");
+
+  // Clear previous listeners
+  state.radioAudio.onplaying = null;
+  state.radioAudio.onerror = null;
+
+  state.radioAudio.onplaying = function() {
+    if (statusEl) {
+      statusEl.textContent = "";
+      statusEl.className = "radio-panel-status";
+    }
+    if (bars) bars.classList.remove("paused");
+  };
+
+  state.radioAudio.onerror = function() {
+    if (statusEl) {
+      statusEl.textContent = "Stream not available";
+      statusEl.className = "radio-panel-status error";
+    }
+    if (bars) bars.classList.add("paused");
+  };
+
+  state.radioAudio.src = streamUrl;
+  state.radioAudio.play().catch(function() {
+    if (statusEl) {
+      statusEl.textContent = "Stream not available";
+      statusEl.className = "radio-panel-status error";
+    }
+    if (bars) bars.classList.add("paused");
+  });
+
+  // Update favorite button state
+  var favBtn = document.getElementById("radio-btn-fav");
+  if (favBtn && radioObj) {
+    if (radioObj.favorite) {
+      favBtn.innerHTML = '<i class="fa-solid fa-heart"></i> Favorited';
+      favBtn.classList.add("fav-active");
+    } else {
+      favBtn.innerHTML = '<i class="fa-regular fa-heart"></i> Favorite';
+      favBtn.classList.remove("fav-active");
+    }
+  }
+
+  // Show the panel and start animation
+  showRadioPanel();
+}
+
+function stopRadio() {
+  if (state.radioAudio) {
+    state.radioAudio.pause();
+    state.radioAudio.removeAttribute("src");
+  }
+  state.radioPlaying = null;
+  var bars = document.getElementById("radio-panel-bars");
+  if (bars) bars.classList.add("paused");
+  hideRadioPanel();
+  state.focusMode = "channellist";
+}
+
+function toggleRadioFavorite() {
+  var radio = state.radioPlaying;
+  if (!radio || !radio.id) return;
+  var favBtn = document.getElementById("radio-btn-fav");
+  if (!favBtn) return;
+
+  if (radio.favorite) {
+    removeFavoriteChannel(radio.id).then(function() {
+      radio.favorite = false;
+      favBtn.innerHTML = '<i class="fa-regular fa-heart"></i> Favorite';
+      favBtn.classList.remove("fav-active");
+    }).catch(function(err) {
+      console.error("Failed to remove radio favorite:", err);
+    });
+  } else {
+    addFavoriteChannel(radio.id).then(function() {
+      radio.favorite = true;
+      favBtn.innerHTML = '<i class="fa-solid fa-heart"></i> Favorited';
+      favBtn.classList.add("fav-active");
+    }).catch(function(err) {
+      console.error("Failed to add radio favorite:", err);
+    });
+  }
+}
+
+function showRadioPanel() {
+  if (state.radioPanel) state.radioPanel.classList.add("visible");
+  var bars = document.getElementById("radio-panel-bars");
+  if (bars) bars.classList.remove("paused");
+}
+
+function hideRadioPanel() {
+  if (state.radioPanel) state.radioPanel.classList.remove("visible");
+}
+
+function updateRadioPanelFocus() {
+  state.radioPanelBtns.forEach(function(btn) {
+    if (btn) btn.classList.remove("active");
+  });
+  if (state.radioPanelBtns[state.radioPanelIndex]) {
+    state.radioPanelBtns[state.radioPanelIndex].classList.add("active");
+  }
+}
+
+function moveRadioPanelFocus(direction) {
+  var newIdx = state.radioPanelIndex + direction;
+  if (newIdx < 0 || newIdx >= state.radioPanelBtns.length) return;
+  state.radioPanelIndex = newIdx;
+  updateRadioPanelFocus();
+}
+
+// ================================================
 // Key handlers
 // ================================================
 
@@ -439,8 +739,14 @@ function handleEnter() {
   // Main menu
   if (state.focusMode === "menu") {
     var selectedItem = state.items[state.selectedIndex];
+    // Stop radio when entering any section other than radio
+    if (selectedItem && selectedItem.id !== "menu-radio" && state.radioPlaying) {
+      stopRadio();
+    }
     if (selectedItem && selectedItem.id === "menu-tv-channels") {
       enterTVChannels();
+    } else if (selectedItem && selectedItem.id === "menu-radio") {
+      enterRadio();
     }
     return;
   }
@@ -470,6 +776,19 @@ function handleEnter() {
       state.focusMode = "channellist";
     } else if (categoryMap[itemId]) {
       showChannelList(categoryMap[itemId]);
+      state.focusMode = "channellist";
+    }
+    return;
+  }
+
+  // Radio sub-menu
+  if (state.focusMode === "radiosubmenu") {
+    var radioItemId = state.radioSubItems[state.radioSubIndex].id;
+    if (radioItemId === "radio-all") {
+      showRadioAllChannels();
+      state.focusMode = "channellist";
+    } else if (radioItemId === "radio-favorites") {
+      showRadioFavoritesList();
       state.focusMode = "channellist";
     }
     return;
@@ -520,12 +839,35 @@ function handleEnter() {
     return;
   }
 
-  // Channel list — enter player with filtered list as playlist
+  // Channel list — enter player or play radio inline
   if (state.focusMode === "channellist") {
     var item = state.channelListItems[state.channelListIndex];
     if (item && item.dataset.stream) {
+      // Radio types play inline without entering the video player
+      if (state.channelListType === "radio" || state.channelListType === "radio-favorites") {
+        var radioIdx = state.channelListIndex;
+        var radioObj = state.radiosData[radioIdx] || null;
+        // For radio-favorites, find the right object
+        if (state.channelListType === "radio-favorites") {
+          var favRadios = state.radiosData.filter(function(r) { return r.favorite === true; });
+          radioObj = favRadios[radioIdx] || null;
+        }
+        playRadio(item.dataset.stream, radioObj);
+        return;
+      }
       var listStreams = state.channelListItems.map(function(i) { return i.dataset.stream; }).filter(Boolean);
       enterPlayer(item.dataset.stream, listStreams, state.channelListIndex);
+    }
+    return;
+  }
+
+  // Radio panel — handle stop and favorite buttons
+  if (state.focusMode === "radiopanel") {
+    var btn = state.radioPanelBtns[state.radioPanelIndex];
+    if (btn && btn.id === "radio-btn-stop") {
+      stopRadio();
+    } else if (btn && btn.id === "radio-btn-fav") {
+      toggleRadioFavorite();
     }
     return;
   }
@@ -538,12 +880,16 @@ function handleUp() {
     moveMenuFocus(-1);
   } else if (state.focusMode === "submenu") {
     moveSubFocus(-1);
+  } else if (state.focusMode === "radiosubmenu") {
+    moveRadioSubFocus(-1);
   } else if (state.focusMode === "countrysubmenu") {
     moveCountryFocus(-1);
   } else if (state.focusMode === "channellist") {
     moveChannelListFocus(-1);
   } else if (state.focusMode === "channels") {
     moveChannelRow(-1);
+  } else if (state.focusMode === "radiopanel") {
+    // Do nothing — only left/right navigation in panel
   }
 }
 
@@ -554,12 +900,16 @@ function handleDown() {
     moveMenuFocus(1);
   } else if (state.focusMode === "submenu") {
     moveSubFocus(1);
+  } else if (state.focusMode === "radiosubmenu") {
+    moveRadioSubFocus(1);
   } else if (state.focusMode === "countrysubmenu") {
     moveCountryFocus(1);
   } else if (state.focusMode === "channellist") {
     moveChannelListFocus(1);
   } else if (state.focusMode === "channels") {
     moveChannelRow(1);
+  } else if (state.focusMode === "radiopanel") {
+    // Do nothing — only left/right navigation in panel
   }
 }
 
@@ -578,16 +928,28 @@ function handleLeft() {
     } else {
       moveChannelCol(-1);
     }
+  } else if (state.focusMode === "radiopanel") {
+    // Go back to canal list from radio panel
+    state.radioPanelBtns.forEach(function(btn) { if (btn) btn.classList.remove("active"); });
+    state.focusMode = "channellist";
   } else if (state.focusMode === "channellist") {
     hideChannelList();
     if (state.channelListType === "internet") {
       state.focusMode = "countrysubmenu";
+    } else if (state.channelListType === "radio" || state.channelListType === "radio-favorites") {
+      state.focusMode = "radiosubmenu";
     } else {
       state.focusMode = "submenu";
     }
   } else if (state.focusMode === "countrysubmenu") {
     hideCountrySubMenu();
     state.focusMode = "submenu";
+  } else if (state.focusMode === "radiosubmenu") {
+    hideRadioSubMenu();
+    if (state.radioPlaying) stopRadio();
+    expandMenu();
+    showChannelsSection();
+    state.focusMode = "menu";
   } else if (state.focusMode === "submenu") {
     hideSubMenu();
     expandMenu();
@@ -609,6 +971,15 @@ function handleRight() {
     }
   } else if (state.focusMode === "channels") {
     moveChannelCol(1);
+  } else if (state.focusMode === "channellist") {
+    // If radio is playing, move focus to the radio panel
+    if (state.radioPlaying && state.radioPanel) {
+      state.radioPanelIndex = 0;
+      updateRadioPanelFocus();
+      state.focusMode = "radiopanel";
+    }
+  } else if (state.focusMode === "radiopanel") {
+    moveRadioPanelFocus(1);
   }
 }
 
@@ -618,6 +989,9 @@ function handleBack() {
     state.focusMode = "player";
   } else if (state.focusMode === "player") {
     exitPlayer();
+  } else if (state.focusMode === "radiopanel") {
+    state.radioPanelBtns.forEach(function(btn) { if (btn) btn.classList.remove("active"); });
+    state.focusMode = "channellist";
   } else if (state.focusMode === "channels") {
     clearChannelFocus();
     state.focusMode = "menu";
@@ -625,12 +999,20 @@ function handleBack() {
     hideChannelList();
     if (state.channelListType === "internet") {
       state.focusMode = "countrysubmenu";
+    } else if (state.channelListType === "radio" || state.channelListType === "radio-favorites") {
+      state.focusMode = "radiosubmenu";
     } else {
       state.focusMode = "submenu";
     }
   } else if (state.focusMode === "countrysubmenu") {
     hideCountrySubMenu();
     state.focusMode = "submenu";
+  } else if (state.focusMode === "radiosubmenu") {
+    hideRadioSubMenu();
+    if (state.radioPlaying) stopRadio();
+    expandMenu();
+    showChannelsSection();
+    state.focusMode = "menu";
   } else if (state.focusMode === "submenu") {
     hideSubMenu();
     expandMenu();

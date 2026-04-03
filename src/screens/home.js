@@ -1,4 +1,4 @@
-import { getChannels, getInternetChannelFilters } from "../api.js";
+import { getChannels, getInternetChannelFilters, getUser } from "../api.js";
 import Remote from "../remote.js";
 import { fetchWeather } from "../weather_api.js";
 import state from "./state.js";
@@ -79,6 +79,22 @@ class HomeScreen {
     state.countrySubMenu.appendChild(state.countryWrapper);
     state.countryItems = Array.from(state.countrySubMenu.querySelectorAll(".country-item"));
 
+    // Setup radio sub-menu
+    state.radioSubMenu = document.getElementById("radio-sub-menu");
+    state.radioSubItems = Array.from(state.radioSubMenu.querySelectorAll(".sub-item"));
+    state.radioSubWrapper = document.createElement("div");
+    state.radioSubWrapper.style.cssText = "position: relative; transition: transform 0.25s ease;";
+    while (state.radioSubMenu.firstChild) state.radioSubWrapper.appendChild(state.radioSubMenu.firstChild);
+    state.radioSubMenu.appendChild(state.radioSubWrapper);
+
+    // Setup radio now-playing panel
+    state.radioPanel = document.getElementById("radio-panel");
+    state.radioPanelBtns = [
+      document.getElementById("radio-btn-stop"),
+      document.getElementById("radio-btn-fav")
+    ];
+    state.radioAudio = new Audio();
+
     // Load Internet TV countries from API
     getInternetChannelFilters().then(function(data) {
       if (data && data.countries) {
@@ -99,9 +115,10 @@ class HomeScreen {
     // Store raw channel data for filtering
     state.channelsData = channelsData || [];
 
-    // Populate channels from API
+    // Populate channels from API (exclude adult channels)
     if (channelsData && Array.isArray(channelsData)) {
       channelsData.forEach(function(ch) {
+        if (ch.category_ids && ch.category_ids.indexOf(9) !== -1) return;
         var epg = ch.current_epg;
         var name = ch.name || "Unknown";
         var logo = ch.stream_icon || "";
@@ -119,6 +136,18 @@ class HomeScreen {
 
     fetchWeather();
     setInterval(fetchWeather, 60000);
+
+    // Set background image from user preference
+    getUser().then(function(userData) {
+      if (userData && userData.background_image && userData.background_image.url) {
+        var content = document.querySelector('.content');
+        if (content) {
+          content.style.backgroundImage = 'url(' + userData.background_image.url + ')';
+        }
+      }
+    }).catch(function(err) {
+      console.error("Failed to load user background:", err);
+    });
 
   }
 

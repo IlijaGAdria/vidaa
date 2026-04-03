@@ -402,4 +402,41 @@ export async function getUser() {
   }
 }
 
+export async function getRadios() {
+  try {
+    const response = await fetch(
+      `${API_URL}/radios/p?per_page=100&page=1`,
+      {
+        method: "POST",
+        headers: {
+          "Accept": "application/json, text/plain, */*",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + localStorage.getItem("access_token"),
+          "x-api-auth": "a092faa42c38ed67a345a017a99d580f125b19c29ba84f3ebb4152e805328b93",
+          "language-id": String(getLanguage()),
+          "device-mac": "a1:b2:c3:d4:e5",
+          "device-uid": localStorage.getItem("device_id") || "webbrowser",
+          "reskin": reskin,
+        },
+        body: JSON.stringify({
+          category: ""
+        }),
+          
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(data);
+    return data;
+
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw error;
+  }
+}
+
 
