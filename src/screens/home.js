@@ -87,6 +87,14 @@ class HomeScreen {
     while (state.radioSubMenu.firstChild) state.radioSubWrapper.appendChild(state.radioSubMenu.firstChild);
     state.radioSubMenu.appendChild(state.radioSubWrapper);
 
+    // Setup favorites sub-menu
+    state.favSubMenu = document.getElementById("favorites-sub-menu");
+    state.favSubItems = Array.from(state.favSubMenu.querySelectorAll(".sub-item"));
+    state.favSubWrapper = document.createElement("div");
+    state.favSubWrapper.style.cssText = "position: relative; transition: transform 0.25s ease;";
+    while (state.favSubMenu.firstChild) state.favSubWrapper.appendChild(state.favSubMenu.firstChild);
+    state.favSubMenu.appendChild(state.favSubWrapper);
+
     // Setup radio now-playing panel
     state.radioPanel = document.getElementById("radio-panel");
     state.radioPanelBtns = [

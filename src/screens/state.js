@@ -1,7 +1,7 @@
 // Shared state for the home screen modules
 
 const state = {
-  // Focus mode: "menu", "channels", "submenu", "countrysubmenu", "channellist", "player", "playeroverlay", "radiosubmenu", "radiopanel"
+  // Focus mode: "menu", "channels", "submenu", "countrysubmenu", "channellist", "player", "playeroverlay", "radiosubmenu", "radiopanel", "favsubmenu"
   focusMode: "menu",
 
   // Menu state
@@ -28,6 +28,12 @@ const state = {
   radioSubItems: [],
   radioSubWrapper: null,
   radioSubIndex: 0,
+
+  // Favorites sub-menu state
+  favSubMenu: null,
+  favSubItems: [],
+  favSubWrapper: null,
+  favSubIndex: 0,
 
   // Country sub-menu state
   countrySubMenu: null,
