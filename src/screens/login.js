@@ -2,6 +2,8 @@ import { login, getInfo } from "../api.js";
 
 import { fetchWeather } from "../weather_api.js";
 
+import VirtualKeyboard from "../virtual_keyboard.js";
+
 class LoginScreen {
 
   constructor(app) {
@@ -35,6 +37,12 @@ class LoginScreen {
 
     document.getElementById("registerBtn")
       .addEventListener("click", this.showRegistration.bind(this));
+
+    // Init virtual keyboard for TV remote navigation
+    VirtualKeyboard.init({
+      onLogin: this.handleLogin.bind(this),
+      onRegister: this.showRegistration.bind(this),
+    });
 
   }
 
@@ -111,6 +119,7 @@ class LoginScreen {
         localStorage.setItem("access_token", result.access_token);
         localStorage.setItem("stream_token", result.stream_token || "");
         this.showStatus("Login successful! Loading...", "success");
+        VirtualKeyboard.destroy();
         this.app.showHome();
       } else {
         const msg = result && result.error ? result.error : (result && result.message ? result.message : "Login failed. Please check your credentials.");
