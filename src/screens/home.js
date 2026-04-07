@@ -1,8 +1,8 @@
-import { getChannels, getInternetChannelFilters, getMovies, getUser } from "../api.js";
+import { getChannels, getInternetChannelFilters, getMovies, getUser, fetchNewsCountries, fetchNewsFeed } from "../api.js";
 import Remote from "../remote.js";
 import { fetchWeather } from "../weather_api.js";
 import state from "./state.js";
-import { handler, loadInternetCountries, loadMovieCategories } from "./navigation.js";
+import { handler, loadInternetCountries, loadMovieCategories, loadNewsCountries } from "./navigation.js";
 
 // Format EPG datetime string to HH:MM
 function formatEpgTime(datetimeStr) {
@@ -102,6 +102,31 @@ class HomeScreen {
     while (state.moviesSubMenu.firstChild) state.moviesSubWrapper.appendChild(state.moviesSubMenu.firstChild);
     state.moviesSubMenu.appendChild(state.moviesSubWrapper);
     state.moviesSubItems = [];
+
+    // Setup news section
+    state.newsSection = document.getElementById("news-section");
+    state.newsGrid = document.getElementById("news-grid");
+    state.newsCountryBtn = document.getElementById("news-country-btn");
+    state.newsFilterBtn = document.getElementById("news-filter-btn");
+    state.newsCountryList = document.getElementById("news-country-list");
+    state.newsCountryListWrapper = document.createElement("div");
+    state.newsCountryListWrapper.style.cssText = "position: relative; transition: transform 0.25s ease;";
+    state.newsCountryList.appendChild(state.newsCountryListWrapper);
+    state.newsFilterList = document.getElementById("news-filter-list");
+    state.newsFilterListWrapper = document.createElement("div");
+    state.newsFilterListWrapper.style.cssText = "position: relative; transition: transform 0.25s ease;";
+    state.newsFilterList.appendChild(state.newsFilterListWrapper);
+
+    // Load news countries
+    fetchNewsCountries().then(function(countries) {
+      var list = Array.isArray(countries) ? countries : (countries && countries.data ? countries.data : []);
+      if (list.length > 0) {
+        state.newsCountries = list;
+        loadNewsCountries(list);
+      }
+    }).catch(function(err) {
+      console.error("Failed to load news countries:", err);
+    });
 
     // Load movie categories from API
     getMovies().then(function(data) {

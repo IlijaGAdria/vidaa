@@ -480,4 +480,99 @@ export async function getMovies() {
   }
 }
 
+export async function fetchNewsFeed({
+  country_id = "",
+  filter_id = "",
+  per_page = 100,
+  page = 1
+} = {}) {
+  try {
+    const params = new URLSearchParams({
+      country_id,
+      filter_id,
+      per_page,
+      page
+    });
 
+    const response = await fetch(`${API_URL}/news/feed/p?${params}`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+        "device-uid": localStorage.getItem("device_id") || "webbrowser",
+        "language-id": String(getLanguage()),
+        "pn-token": "null",
+        "reskin": reskin,
+        "x-api-auth": "ff568a145e2d11c5d796971ac707d04772c3543607e4d789a335e9a8a08dbc80"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("fetchNewsFeed error:", error);
+    throw error;
+  }
+}
+
+export async function fetchNewsFilters({ country_id = "" } = {}) {
+  try {
+    const params = new URLSearchParams({
+      country_id
+    });
+
+    const response = await fetch(`${API_URL}/news/filter?${params}`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+        "device-uid": localStorage.getItem("device_id") || "webbrowser",
+        "language-id": String(getLanguage()),
+        "pn-token": "null",
+        "reskin": reskin,
+        "x-api-auth": "d01530851a4528f8a00f8832e9c3901436dad47a60ecd0f79f0a7742434d2ff5"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("fetchNewsFilters error:", error);
+    throw error;
+  }
+}
+
+export async function fetchNewsCountries() {
+  try {
+    const response = await fetch(`${API_URL}/news/countries`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+        "device-uid": localStorage.getItem("device_id") || "webbrowser",
+        "language-id": String(getLanguage()),
+        "pn-token": "null",
+        "reskin": reskin,
+        "x-api-auth": "4e65f386723731546c03afe312e1e3ef566e0214562e1679e6bd7299914beaad"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("fetchNewsCountries error:", error);
+    throw error;
+  }
+}

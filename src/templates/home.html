@@ -159,6 +159,268 @@
   color: #fff;
 }
 
+/* News Section */
+
+.news-section {
+  position: fixed;
+  top: 10vh;
+  left: 10vw;
+  width: 88vw;
+  height: 85vh;
+  display: none;
+  flex-direction: column;
+  color: white;
+  padding: 2vw;
+  overflow: hidden;
+}
+
+.news-section.visible {
+  display: flex;
+}
+
+.news-top-bar {
+  display: flex;
+  gap: 2vw;
+  margin-bottom: 2vw;
+  flex-shrink: 0;
+}
+
+.news-dropdown {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1vw 1.5vw;
+  background: linear-gradient(135deg, #00b9be 0%, #00a0a5 100%);
+  border-radius: 0.6vw;
+  font-size: 1.3vw;
+  font-weight: 500;
+  cursor: pointer;
+  color: white;
+}
+
+.news-dropdown.active {
+  outline: 3px solid white;
+  outline-offset: -3px;
+}
+
+.news-dropdown i {
+  font-size: 1.1vw;
+}
+
+.news-grid-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.news-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 22vw;
+  gap: 1.5vw;
+  position: relative;
+  transition: transform 0.25s ease;
+}
+
+.news-card {
+  position: relative;
+  border-radius: 0.8vw;
+  overflow: hidden;
+  background: rgba(255,255,255,0.08);
+  cursor: pointer;
+}
+
+.news-card.active {
+  outline: 3px solid #00b9be;
+  outline-offset: -3px;
+}
+
+.news-card .news-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.news-card .news-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1.5vw;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  display: flex;
+  flex-direction: column;
+  gap: 0.4vw;
+}
+
+.news-card .news-card-title {
+  font-size: 1.15vw;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.news-card .news-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.news-card .news-card-date {
+  font-size: 0.85vw;
+  opacity: 0.8;
+}
+
+.news-card .news-card-logo {
+  height: 2vw;
+  object-fit: contain;
+}
+
+/* News Preview Overlay */
+.news-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  z-index: 200;
+  background: rgba(10, 15, 20, 0.97);
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+.news-preview.visible {
+  display: flex;
+}
+.news-preview-card {
+  display: flex;
+  flex-direction: column;
+  width: 60vw;
+  max-height: 85vh;
+  background: rgba(30, 40, 55, 0.95);
+  border-radius: 1.2vw;
+  overflow: hidden;
+  box-shadow: 0 0 4vw rgba(0,185,190,0.25);
+}
+.news-preview-img {
+  width: 100%;
+  height: 35vh;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.news-preview-body {
+  padding: 2vw 2.5vw;
+  overflow-y: auto;
+  flex: 1;
+}
+.news-preview-title {
+  font-size: 2vw;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1vw;
+  line-height: 1.3;
+}
+.news-preview-meta {
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  margin-bottom: 1.5vw;
+}
+.news-preview-date {
+  font-size: 1vw;
+  color: rgba(255,255,255,0.5);
+}
+.news-preview-logo {
+  height: 2vw;
+  object-fit: contain;
+}
+.news-preview-desc {
+  font-size: 1.3vw;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.6;
+}
+.news-preview-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 3vw;
+  color: rgba(255,255,255,0.3);
+  transition: color 0.2s;
+}
+.news-preview-nav.active {
+  color: #00b9be;
+}
+.news-preview-nav.left {
+  left: 2vw;
+}
+.news-preview-nav.right {
+  right: 2vw;
+}
+.news-preview-counter {
+  position: absolute;
+  bottom: 2vw;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1vw;
+  color: rgba(255,255,255,0.4);
+}
+
+/* News dropdown overlay list */
+.news-dropdown-list {
+  position: fixed;
+  display: none;
+  flex-direction: column;
+  gap: 0.4vw;
+  max-height: 50vh;
+  overflow: hidden;
+  background: rgba(20, 30, 40, 0.95);
+  border-radius: 0.6vw;
+  padding: 0.6vw;
+  z-index: 100;
+  min-width: 20vw;
+}
+
+.news-dropdown-list.visible {
+  display: flex;
+}
+
+.news-dropdown-list .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8vw;
+  padding: 0.7vw 1vw;
+  border-radius: 0.4vw;
+  font-size: 1.1vw;
+  cursor: pointer;
+  white-space: nowrap;
+  color: white;
+}
+
+.news-dropdown-list .dropdown-item.active {
+  background: #00b9be;
+}
+
+.news-dropdown-list .dropdown-item img {
+  width: 1.8vw;
+  height: 1.2vw;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.news-dropdown-list .dropdown-item .pub-icon {
+  width: 1.8vw;
+  height: 1.8vw;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
 /* Channel List (filtered category view) */
 
 .channel-list {
@@ -783,25 +1045,15 @@
 <!-- Scroll Menu -->
 <div class="vertical-scroll" id="menu"> 
   <div class="item active" id="menu-home" tabindex="0"> <i class="fa-solid fa-house"></i>Home</div>
-
   <div class="item" id="menu-tv-channels" tabindex="-1"> <i class="fa-solid fa-tv"></i>TV Channels</div>
-
   <div class="item" id="menu-radio" tabindex="-1"> <i class="fa-solid fa-radio"></i>Radio Stations</div>
-
   <div class="item" id="menu-favorites" tabindex="-1"> <i class="fa-solid fa-heart-circle-plus"></i>Favorites</div>
-
   <div class="item" id="menu-movies" tabindex="-1"> <i class="fa-solid fa-film"></i>Movies</div>
-
   <div class="item" id="menu-tv-shows" tabindex="-1"> <i class="fa-solid fa-clapperboard"></i>TV Shows</div>
-
   <div class="item" id="menu-news" tabindex="-1"> <i class="fa-solid fa-newspaper"></i>News</div>
-
   <div class="item" id="menu-search" tabindex="-1"> <i class="fa-solid fa-magnifying-glass"></i>Search</div>
-
   <div class="item" id="menu-video-tutorials" tabindex="-1"> <i class="fa-solid fa-video"></i>Video Tutorials</div>
-
   <div class="item" id="menu-settings" tabindex="-1"> <i class="fa-solid fa-cog"></i>Settings</div>
-
 </div>
 
 <!-- Sub Menu -->
@@ -846,6 +1098,47 @@
 
 <!-- Movies Sub Menu -->
 <div class="sub-menu" id="movies-sub-menu">
+</div>
+
+<!-- News Section -->
+<div class="news-section" id="news-section">
+  <div class="news-top-bar">
+    <div class="news-dropdown" id="news-country-btn">
+      <span>Select Country</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+    <div class="news-dropdown" id="news-filter-btn">
+      <span>Select Newspaper</span>
+      <i class="fa-solid fa-chevron-down"></i>
+    </div>
+  </div>
+  <div class="news-grid-container">
+    <div class="news-grid" id="news-grid"></div>
+  </div>
+</div>
+
+<!-- News Country Dropdown List -->
+<div class="news-dropdown-list" id="news-country-list"></div>
+
+<!-- News Filter Dropdown List -->
+<div class="news-dropdown-list" id="news-filter-list"></div>
+
+<!-- News Preview Overlay -->
+<div class="news-preview" id="news-preview">
+  <div class="news-preview-nav left" id="news-prev-btn"><i class="fa-solid fa-chevron-left"></i></div>
+  <div class="news-preview-card">
+    <img class="news-preview-img" id="news-preview-img" src="" onerror="this.style.display='none'">
+    <div class="news-preview-body">
+      <div class="news-preview-title" id="news-preview-title"></div>
+      <div class="news-preview-meta">
+        <span class="news-preview-date" id="news-preview-date"></span>
+        <img class="news-preview-logo" id="news-preview-logo" src="">
+      </div>
+      <div class="news-preview-desc" id="news-preview-desc"></div>
+    </div>
+  </div>
+  <div class="news-preview-nav right" id="news-next-btn"><i class="fa-solid fa-chevron-right"></i></div>
+  <div class="news-preview-counter" id="news-preview-counter"></div>
 </div>
 
 <!-- Channel List (filtered category view) -->
