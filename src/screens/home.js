@@ -1,8 +1,8 @@
-import { getChannels, getInternetChannelFilters, getUser } from "../api.js";
+import { getChannels, getInternetChannelFilters, getMovies, getUser } from "../api.js";
 import Remote from "../remote.js";
 import { fetchWeather } from "../weather_api.js";
 import state from "./state.js";
-import { handler, loadInternetCountries } from "./navigation.js";
+import { handler, loadInternetCountries, loadMovieCategories } from "./navigation.js";
 
 // Format EPG datetime string to HH:MM
 function formatEpgTime(datetimeStr) {
@@ -94,6 +94,27 @@ class HomeScreen {
     state.favSubWrapper.style.cssText = "position: relative; transition: transform 0.25s ease;";
     while (state.favSubMenu.firstChild) state.favSubWrapper.appendChild(state.favSubMenu.firstChild);
     state.favSubMenu.appendChild(state.favSubWrapper);
+
+    // Setup movies sub-menu
+    state.moviesSubMenu = document.getElementById("movies-sub-menu");
+    state.moviesSubWrapper = document.createElement("div");
+    state.moviesSubWrapper.style.cssText = "position: relative; transition: transform 0.25s ease;";
+    while (state.moviesSubMenu.firstChild) state.moviesSubWrapper.appendChild(state.moviesSubMenu.firstChild);
+    state.moviesSubMenu.appendChild(state.moviesSubWrapper);
+    state.moviesSubItems = [];
+
+    // Load movie categories from API
+    getMovies().then(function(data) {
+      console.log("[Movies] Raw API response:", data);
+      var categories = Array.isArray(data) ? data : (data && data.data ? data.data : []);
+      console.log("[Movies] Parsed categories:", categories.length);
+      if (categories.length > 0) {
+        state.moviesCategories = categories;
+        loadMovieCategories(categories);
+      }
+    }).catch(function(err) {
+      console.error("Failed to load movie categories:", err);
+    });
 
     // Setup radio now-playing panel
     state.radioPanel = document.getElementById("radio-panel");

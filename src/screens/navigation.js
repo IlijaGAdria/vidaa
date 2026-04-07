@@ -1,6 +1,6 @@
 import state from "./state.js";
 import { playChannel, switchChannel, stopPlayer, togglePause, getCurrentChannel } from "./player.js";
-import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel, getM3uChannels, getRadios } from "../api.js";
+import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel, getM3uChannels, getRadios, getMovies } from "../api.js";
 
 // ================================================
 // DOM Helpers
@@ -121,6 +121,42 @@ function moveFavSubFocus(direction) {
   state.favSubIndex += direction;
   state.favSubItems[state.favSubIndex].tabIndex = 0;
   state.favSubItems[state.favSubIndex].classList.add("active");
+}
+
+// ================================================
+// Movies sub-menu
+// ================================================
+
+function showMoviesSubMenu() {
+  if (state.moviesSubMenu) state.moviesSubMenu.classList.add("visible");
+  state.moviesSubItems.forEach(function(item) {
+    item.classList.remove("active");
+    item.tabIndex = -1;
+  });
+  var idx = state.moviesSubIndex || 0;
+  if (idx >= state.moviesSubItems.length) idx = 0;
+  state.moviesSubIndex = idx;
+  if (state.moviesSubItems[idx]) {
+    state.moviesSubItems[idx].classList.add("active");
+    state.moviesSubItems[idx].tabIndex = 0;
+    var topIdx = Math.max(0, idx - 3);
+    state.moviesSubWrapper.style.transform = "translateY(" + (-state.moviesSubItems[topIdx].offsetTop) + "px)";
+  }
+}
+
+function hideMoviesSubMenu() {
+  if (state.moviesSubMenu) state.moviesSubMenu.classList.remove("visible");
+}
+
+function moveMoviesSubFocus(direction) {
+  if (state.moviesSubIndex + direction < 0 || state.moviesSubIndex + direction >= state.moviesSubItems.length) return;
+  state.moviesSubItems[state.moviesSubIndex].tabIndex = -1;
+  state.moviesSubItems[state.moviesSubIndex].classList.remove("active");
+  state.moviesSubIndex += direction;
+  state.moviesSubItems[state.moviesSubIndex].tabIndex = 0;
+  state.moviesSubItems[state.moviesSubIndex].classList.add("active");
+  var topIdx = Math.max(0, state.moviesSubIndex - 3);
+  state.moviesSubWrapper.style.transform = "translateY(" + (-state.moviesSubItems[topIdx].offsetTop) + "px)";
 }
 
 // ================================================
@@ -366,6 +402,7 @@ function hideAllUI() {
   if (state.subMenu) state.subMenu.style.display = "none";
   if (state.radioSubMenu) state.radioSubMenu.style.display = "none";
   if (state.favSubMenu) state.favSubMenu.style.display = "none";
+  if (state.moviesSubMenu) state.moviesSubMenu.style.display = "none";
   if (state.countrySubMenu) state.countrySubMenu.style.display = "none";
   if (state.channelList) state.channelList.style.display = "none";
   if (state.radioPanel) state.radioPanel.style.display = "none";
@@ -379,6 +416,7 @@ function restoreAllUI() {
   if (state.subMenu) state.subMenu.style.display = "";
   if (state.radioSubMenu) state.radioSubMenu.style.display = "";
   if (state.favSubMenu) state.favSubMenu.style.display = "";
+  if (state.moviesSubMenu) state.moviesSubMenu.style.display = "";
   if (state.countrySubMenu) state.countrySubMenu.style.display = "";
   if (state.channelList) state.channelList.style.display = "";
   if (state.radioPanel) state.radioPanel.style.display = "";
@@ -525,6 +563,21 @@ function enterFavorites() {
   showFavSubMenu();
   hideChannelsSection();
   state.focusMode = "favsubmenu";
+}
+
+// ================================================
+// Movies entry
+// ================================================
+
+function enterMovies() {
+  minimizeMenu();
+  setTimeout(function() {
+    var topIndex = Math.max(0, state.selectedIndex - 3);
+    state.wrapper.style.transform = "translateY(" + (-state.items[topIndex].offsetTop) + "px)";
+  }, 0);
+  showMoviesSubMenu();
+  hideChannelsSection();
+  state.focusMode = "moviessubmenu";
 }
 
 function showFavTvChannels() {
@@ -861,6 +914,8 @@ function handleEnter() {
       enterRadio();
     } else if (selectedItem && selectedItem.id === "menu-favorites") {
       enterFavorites();
+    } else if (selectedItem && selectedItem.id === "menu-movies") {
+      enterMovies();
     }
     return;
   }
@@ -917,6 +972,17 @@ function handleEnter() {
     } else if (favItemId === "fav-radio-stations") {
       showFavRadioStations();
       state.focusMode = "channellist";
+    }
+    return;
+  }
+
+  // Movies sub-menu — select a movie category
+  if (state.focusMode === "moviessubmenu") {
+    var movieItem = state.moviesSubItems[state.moviesSubIndex];
+    if (movieItem && movieItem.dataset.categoryId) {
+      var catId = parseInt(movieItem.dataset.categoryId, 10);
+      console.log("[Movies] Selected category:", catId, movieItem.textContent.trim());
+      // TODO: fetch movies for this category and display them
     }
     return;
   }
@@ -1011,6 +1077,8 @@ function handleUp() {
     moveRadioSubFocus(-1);
   } else if (state.focusMode === "favsubmenu") {
     moveFavSubFocus(-1);
+  } else if (state.focusMode === "moviessubmenu") {
+    moveMoviesSubFocus(-1);
   } else if (state.focusMode === "countrysubmenu") {
     moveCountryFocus(-1);
   } else if (state.focusMode === "channellist") {
@@ -1033,6 +1101,8 @@ function handleDown() {
     moveRadioSubFocus(1);
   } else if (state.focusMode === "favsubmenu") {
     moveFavSubFocus(1);
+  } else if (state.focusMode === "moviessubmenu") {
+    moveMoviesSubFocus(1);
   } else if (state.focusMode === "countrysubmenu") {
     moveCountryFocus(1);
   } else if (state.focusMode === "channellist") {
@@ -1079,6 +1149,11 @@ function handleLeft() {
     state.focusMode = "submenu";
   } else if (state.focusMode === "favsubmenu") {
     hideFavSubMenu();
+    expandMenu();
+    showChannelsSection();
+    state.focusMode = "menu";
+  } else if (state.focusMode === "moviessubmenu") {
+    hideMoviesSubMenu();
     expandMenu();
     showChannelsSection();
     state.focusMode = "menu";
@@ -1152,6 +1227,11 @@ function handleBack() {
     expandMenu();
     showChannelsSection();
     state.focusMode = "menu";
+  } else if (state.focusMode === "moviessubmenu") {
+    hideMoviesSubMenu();
+    expandMenu();
+    showChannelsSection();
+    state.focusMode = "menu";
   } else if (state.focusMode === "radiosubmenu") {
     hideRadioSubMenu();
     if (state.radioPlaying) stopRadio();
@@ -1178,6 +1258,26 @@ export const handler = {
   onEnter: () => handleEnter(),
   onBack: () => handleBack(),
 };
+
+export function loadMovieCategories(categories) {
+  while (state.moviesSubWrapper.firstChild) {
+    state.moviesSubWrapper.removeChild(state.moviesSubWrapper.firstChild);
+  }
+  categories.forEach(function(cat, idx) {
+    var item = document.createElement("div");
+    item.className = "sub-item";
+    if (idx === 0) item.classList.add("active");
+    item.tabIndex = idx === 0 ? 0 : -1;
+    item.dataset.categoryId = cat.id;
+    item.innerHTML = '<span class="sub-icon">' +
+      (cat.icon_src ? '<img src="' + cat.icon_src + '" style="width:100%;height:100%;object-fit:contain;">' : '<i class="fa-solid fa-film"></i>') +
+      '</span>' + cat.category_name;
+    state.moviesSubWrapper.appendChild(item);
+  });
+  state.moviesSubItems = Array.from(state.moviesSubMenu.querySelectorAll(".sub-item"));
+  state.moviesSubIndex = 0;
+  console.log("[Movies] Loaded", state.moviesSubItems.length, "category items");
+}
 
 export function loadInternetCountries(countries) {
   // Clear existing country items

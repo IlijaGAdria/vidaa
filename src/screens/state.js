@@ -35,6 +35,13 @@ const state = {
   favSubWrapper: null,
   favSubIndex: 0,
 
+  // Movies sub-menu state
+  moviesSubMenu: null,
+  moviesSubItems: [],
+  moviesSubWrapper: null,
+  moviesSubIndex: 0,
+  moviesCategories: [],
+
   // Country sub-menu state
   countrySubMenu: null,
   countryItems: [],

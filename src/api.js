@@ -439,4 +439,45 @@ export async function getRadios() {
   }
 }
 
+export async function getMovies() {
+  try {
+    // Direct request first, fall back to CORS proxy for local development
+    var url = `${API_URL}/movies/filter`;
+    var headers = {
+      "Content-Type": "application/json",
+      "Accept": "application/json, text/plain, */*",
+      "Authorization": "Bearer " + localStorage.getItem("access_token"),
+      "x-api-auth": "6b20c954a19c883a5c38ae9e6ecaf83f4984aaeca6c3b7317a0f2bfe97f8a6cb",
+      "language-id": String(getLanguage()),
+      "device-uid": localStorage.getItem("device_id") || "webbrowser",
+      "reskin": reskin
+    };
+
+    var response;
+    try {
+      response = await fetch(url, { method: "POST", headers: headers, body: null });
+    } catch (e) {
+      // CORS blocked — use proxy for local development
+      console.warn("[Movies] Direct request failed (CORS), trying proxy...");
+      response = await fetch("https://corsproxy.io/?" + encodeURIComponent(url), {
+        method: "POST",
+        headers: headers,
+        body: null
+      });
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Movies:", data);
+    return data;
+
+  } catch (error) {
+    console.error("Fetch error:", error);
+    throw error;
+  }
+}
+
 
