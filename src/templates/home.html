@@ -159,6 +159,154 @@
   color: #fff;
 }
 
+/* Search Section */
+
+.search-section {
+  position: fixed;
+  top: 10vh;
+  left: 10vw;
+  width: 88vw;
+  height: 85vh;
+  display: none;
+  flex-direction: column;
+  color: white;
+  padding: 2vw;
+  overflow: hidden;
+}
+
+.search-section.visible {
+  display: flex;
+}
+
+.search-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  margin-bottom: 2vw;
+  flex-shrink: 0;
+}
+
+.search-input-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0.8vw 1.5vw;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 0.6vw;
+  font-size: 1.3vw;
+  color: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.search-input-box.active {
+  border-color: #00b9be;
+  background: rgba(0,185,190,0.1);
+}
+
+.search-input-box i {
+  margin-right: 1vw;
+  color: rgba(255,255,255,0.5);
+  font-size: 1.5vw;
+}
+
+.search-input-box .search-text {
+  flex: 1;
+  font-family: 'Montserrat', sans-serif;
+  color: white;
+  font-size: 1.3vw;
+}
+
+.search-input-box .search-text.placeholder {
+  color: rgba(255,255,255,0.4);
+}
+
+.search-input-box .search-cursor {
+  width: 2px;
+  height: 1.5vw;
+  background: #00b9be;
+  animation: blink 1s step-end infinite;
+  margin-left: 2px;
+  display: none;
+}
+
+.search-input-box.active .search-cursor {
+  display: block;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.search-results-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.search-results-list {
+  position: relative;
+  transition: transform 0.25s ease;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  padding: 0.6vw 1vw;
+  border-radius: 0.5vw;
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 1vw;
+}
+
+.search-result-item.active {
+  background: rgba(0,185,190,0.25);
+  outline: 2px solid #00b9be;
+}
+
+.search-result-item .sr-icon {
+  width: 3vw;
+  height: 3vw;
+  object-fit: contain;
+  border-radius: 0.3vw;
+  flex-shrink: 0;
+}
+
+.search-result-item .sr-name {
+  flex: 1;
+  font-size: 1.2vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-result-item .sr-play {
+  font-size: 1.2vw;
+  color: rgba(255,255,255,0.3);
+}
+
+.search-result-item.active .sr-play {
+  color: #00b9be;
+}
+
+.search-no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 40vh;
+  color: rgba(255,255,255,0.4);
+  font-size: 1.5vw;
+  gap: 1vw;
+}
+
+.search-no-results i {
+  font-size: 4vw;
+  opacity: 0.3;
+}
+
 /* News Section */
 
 .news-section {
@@ -1098,6 +1246,20 @@
 
 <!-- Movies Sub Menu -->
 <div class="sub-menu" id="movies-sub-menu">
+</div>
+
+<!-- Search Section -->
+<div class="search-section" id="search-section">
+  <div class="search-input-bar">
+    <div class="search-input-box" id="search-input-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <span class="search-text placeholder" id="search-text">Search TV channels...</span>
+      <span class="search-cursor"></span>
+    </div>
+  </div>
+  <div class="search-results-container">
+    <div class="search-results-list" id="search-results-list"></div>
+  </div>
 </div>
 
 <!-- News Section -->

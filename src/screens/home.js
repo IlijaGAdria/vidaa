@@ -117,6 +117,14 @@ class HomeScreen {
     state.newsFilterListWrapper.style.cssText = "position: relative; transition: transform 0.25s ease;";
     state.newsFilterList.appendChild(state.newsFilterListWrapper);
 
+    // Setup search section
+    state.searchSection = document.getElementById("search-section");
+    state.searchInputBox = document.getElementById("search-input-box");
+    state.searchResultsList = document.getElementById("search-results-list");
+    state.searchResultItems = [];
+    state.searchResultIndex = 0;
+    state.searchQuery = "";
+
     // Load news countries
     fetchNewsCountries().then(function(countries) {
       var list = Array.isArray(countries) ? countries : (countries && countries.data ? countries.data : []);

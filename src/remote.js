@@ -44,12 +44,28 @@ class Remote {
           break;
 
         case 27:    // Escape
-        case 8:     // Backspace (used as Back on some TVs)
         case 10009:  // Tizen Back
         case 461:   // LG webOS Back
         case 29444: // VK_BACK (some Vidaa)
           e.preventDefault();
           this.handler.onBack();
+          break;
+
+        case 8: // Backspace
+          // Let search handle it first, otherwise treat as Back
+          if (this.handler.onKeyPress && this.handler.onKeyPress(e)) {
+            e.preventDefault();
+          } else {
+            e.preventDefault();
+            this.handler.onBack();
+          }
+          break;
+
+        default:
+          // Pass alphanumeric keys to search handler
+          if (this.handler.onKeyPress && this.handler.onKeyPress(e)) {
+            e.preventDefault();
+          }
           break;
 
       }
