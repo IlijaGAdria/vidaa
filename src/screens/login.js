@@ -14,7 +14,7 @@ class LoginScreen {
 
     const root = document.getElementById("app");
 
-    const response = await fetch("../src/templates/login.html");
+    const response = await fetch("src/templates/login.html");
 
     const html = await response.text();
 
@@ -42,6 +42,7 @@ class LoginScreen {
     VirtualKeyboard.init({
       onLogin: this.handleLogin.bind(this),
       onRegister: this.showRegistration.bind(this),
+      onBackToLogin: this.showLogin.bind(this),
     });
 
   }
@@ -54,6 +55,17 @@ class LoginScreen {
     const registrationSection = document.getElementById("registration-section");
     registrationSection.style.display = "flex";
 
+    VirtualKeyboard.switchToRegistration();
+  }
+
+  showLogin() {
+    const registrationSection = document.getElementById("registration-section");
+    registrationSection.style.display = "none";
+
+    const loginSection = document.getElementById("login-section");
+    loginSection.style.display = "flex";
+
+    VirtualKeyboard.switchToLogin();
   }
 
   showStatus(message, type) {

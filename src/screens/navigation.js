@@ -1706,6 +1706,17 @@ export function loadMovieCategories(categories) {
   while (state.moviesSubWrapper.firstChild) {
     state.moviesSubWrapper.removeChild(state.moviesSubWrapper.firstChild);
   }
+  if (!categories || categories.length === 0) {
+    var msg = document.createElement("div");
+    msg.className = "no-results-msg";
+    msg.style.cssText = "color: rgba(255,255,255,0.5); font-size: 1.4vw; padding: 3vw 1.5vw; text-align: center; width: 100%;";
+    msg.textContent = "No results";
+    state.moviesSubWrapper.appendChild(msg);
+    state.moviesSubItems = [];
+    state.moviesSubIndex = 0;
+    console.log("[Movies] No categories available");
+    return;
+  }
   categories.forEach(function(cat, idx) {
     var item = document.createElement("div");
     item.className = "sub-item";

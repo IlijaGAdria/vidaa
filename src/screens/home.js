@@ -43,7 +43,7 @@ class HomeScreen {
 
     const root = document.getElementById("app");
 
-    const response = await fetch("../src/templates/home.html");
+    const response = await fetch("src/templates/home.html");
     const html = await response.text();
     root.innerHTML = html;
 
@@ -133,12 +133,12 @@ class HomeScreen {
       console.log("[Movies] Raw API response:", data);
       var categories = Array.isArray(data) ? data : (data && data.data ? data.data : []);
       console.log("[Movies] Parsed categories:", categories.length);
-      if (categories.length > 0) {
-        state.moviesCategories = categories;
-        loadMovieCategories(categories);
-      }
+      state.moviesCategories = categories;
+      loadMovieCategories(categories);
     }).catch(function(err) {
       console.error("Failed to load movie categories:", err);
+      state.moviesCategories = [];
+      loadMovieCategories([]);
     });
 
     // Setup radio now-playing panel

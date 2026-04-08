@@ -8,17 +8,20 @@ var VirtualKeyboard = (function () {
     rowIndex: 0,
     colIndex: 0,
     focusMode: "form", // "form" | "keyboard"
-    formIndex: 0, // 0=username, 1=password, 2=loginBtn, 3=registerBtn
+    formIndex: 0,
     capsLock: false,
     container: null,
     rows: [],
     keys: [],
     formItems: [],
+    currentScreen: "login", // "login" | "registration"
+    keyboardMode: "full", // "full" | "numeric"
     onLogin: null,
     onRegister: null,
+    onBackToLogin: null,
   };
 
-  // Keyboard layout
+  // Keyboard layouts
   var layouts = {
     lower: [
       ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
@@ -34,9 +37,17 @@ var VirtualKeyboard = (function () {
       ["Z", "X", "C", "V", "B", "N", "M", ".", "-", "_"],
       ["⇧", "SPACE", "⌫", "CLEAR", "DONE"],
     ],
+    numeric: [
+      ["1", "2", "3"],
+      ["4", "5", "6"],
+      ["7", "8", "9"],
+      ["+", "0", "#"],
+      ["⌫", "CLEAR", "DONE"],
+    ],
   };
 
   function getLayout() {
+    if (state.keyboardMode === "numeric") return layouts.numeric;
     return state.capsLock ? layouts.upper : layouts.lower;
   }
 
@@ -70,7 +81,6 @@ var VirtualKeyboard = (function () {
       "  background: rgba(255,255,255,0.08); padding: 0.7vw 2vw; border-radius: 0.4vw;" +
       "  min-width: 30vw; min-height: 2.4vw; letter-spacing: 0.05vw;" +
       "}" +
-      // Form field focus styling
       ".vk-form-active {" +
       "  outline: 3px solid #00b9be !important; box-shadow: 0 0 12px rgba(0,185,190,0.5) !important;" +
       "}" +
@@ -81,8 +91,17 @@ var VirtualKeyboard = (function () {
     document.head.appendChild(style);
   }
 
+  function destroyKeyboard() {
+    if (state.container && state.container.parentNode) {
+      state.container.parentNode.removeChild(state.container);
+    }
+    state.container = null;
+    state.rows = [];
+    state.keys = [];
+  }
+
   function buildKeyboard() {
-    if (state.container) return;
+    destroyKeyboard();
     var overlay = document.createElement("div");
     overlay.className = "vk-overlay";
     overlay.id = "vk-overlay";
@@ -90,14 +109,13 @@ var VirtualKeyboard = (function () {
     var board = document.createElement("div");
     board.className = "vk-board";
 
-    // Input preview
     var preview = document.createElement("div");
     preview.className = "vk-input-preview";
     preview.id = "vk-preview";
     board.appendChild(preview);
 
     var layout = getLayout();
-    layout.forEach(function (rowKeys, rIdx) {
+    layout.forEach(function (rowKeys) {
       var row = document.createElement("div");
       row.className = "vk-row";
       rowKeys.forEach(function (key) {
@@ -170,13 +188,25 @@ var VirtualKeyboard = (function () {
     }
   }
 
+  function isNumericInput(inputEl) {
+    if (!inputEl) return false;
+    return inputEl.type === "tel" || inputEl.id === "reg-phone";
+  }
+
   function show(inputEl) {
-    if (!state.container) buildKeyboard();
     state.activeInput = inputEl;
     state.rowIndex = 0;
     state.colIndex = 0;
     state.capsLock = false;
-    updateKeyLabels();
+
+    var needNumeric = isNumericInput(inputEl);
+    if (needNumeric !== (state.keyboardMode === "numeric") || !state.container) {
+      state.keyboardMode = needNumeric ? "numeric" : "full";
+      buildKeyboard();
+    } else {
+      updateKeyLabels();
+    }
+
     state.container.classList.add("visible");
     state.visible = true;
     state.focusMode = "keyboard";
@@ -218,14 +248,25 @@ var VirtualKeyboard = (function () {
   // Form navigation
   function collectFormItems() {
     state.formItems = [];
-    var u = document.getElementById("username");
-    var p = document.getElementById("password");
-    var l = document.getElementById("loginBtn");
-    var r = document.getElementById("registerBtn");
-    if (u) state.formItems.push(u);
-    if (p) state.formItems.push(p);
-    if (l) state.formItems.push(l);
-    if (r) state.formItems.push(r);
+    if (state.currentScreen === "login") {
+      var u = document.getElementById("username");
+      var p = document.getElementById("password");
+      var l = document.getElementById("loginBtn");
+      var r = document.getElementById("registerBtn");
+      if (u) state.formItems.push(u);
+      if (p) state.formItems.push(p);
+      if (l) state.formItems.push(l);
+      if (r) state.formItems.push(r);
+    } else {
+      var rn = document.getElementById("reg-name");
+      var rp = document.getElementById("reg-phone");
+      var rt = document.getElementById("reg-terms-label");
+      var cb = document.getElementById("confirmRegBtn");
+      if (rn) state.formItems.push(rn);
+      if (rp) state.formItems.push(rp);
+      if (rt) state.formItems.push(rt);
+      if (cb) state.formItems.push(cb);
+    }
   }
 
   function clearFormFocus() {
@@ -239,7 +280,7 @@ var VirtualKeyboard = (function () {
     clearFormFocus();
     var el = state.formItems[state.formIndex];
     if (!el) return;
-    if (el.tagName === "INPUT") {
+    if (el.tagName === "INPUT" || el.tagName === "LABEL") {
       el.classList.add("vk-form-active");
     } else {
       el.classList.add("vk-btn-active");
@@ -253,7 +294,7 @@ var VirtualKeyboard = (function () {
     setFormFocus();
   }
 
-  // Key handler bound to remote
+  // Key handler
   function handleKeyDown(e) {
     if (state.focusMode === "keyboard" && state.visible) {
       handleKeyboardNav(e);
@@ -263,37 +304,60 @@ var VirtualKeyboard = (function () {
   }
 
   function handleFormNav(e) {
-    switch (e.keyCode) {
+    var code = e.keyCode || e.which;
+    switch (code) {
       case 38: // Up
+      case 29460: // VK_UP
         e.preventDefault();
         moveFormFocus(-1);
         break;
       case 40: // Down
+      case 29461: // VK_DOWN
         e.preventDefault();
         moveFormFocus(1);
         break;
       case 13: // Enter
+      case 29443: // VK_ENTER
         e.preventDefault();
         var el = state.formItems[state.formIndex];
         if (!el) return;
-        if (el.tagName === "INPUT") {
+        if (el.tagName === "INPUT" && el.type !== "checkbox") {
           show(el);
+        } else if (el.tagName === "LABEL" && el.id === "reg-terms-label") {
+          var chk = document.getElementById("reg-terms");
+          var box = document.getElementById("reg-terms-box");
+          if (chk) {
+            chk.checked = !chk.checked;
+            if (box) box.classList.toggle("checked", chk.checked);
+          }
         } else if (el.id === "loginBtn" && state.onLogin) {
           state.onLogin();
         } else if (el.id === "registerBtn" && state.onRegister) {
           state.onRegister();
+        } else if (el.id === "confirmRegBtn") {
+          // TODO: handle registration confirm
+          console.log("[VK] Registration confirm pressed");
         }
         break;
-      case 27: // Back — do nothing on login
+      case 27: // Back/ESC
+      case 8:  // Backspace
+      case 10009: // Tizen Back
+      case 461: // LG webOS Back
+      case 29444: // VK_BACK
         e.preventDefault();
+        if (state.currentScreen === "registration" && state.onBackToLogin) {
+          state.onBackToLogin();
+        }
         break;
     }
   }
 
   function handleKeyboardNav(e) {
     e.preventDefault();
-    switch (e.keyCode) {
+    var code = e.keyCode || e.which;
+    switch (code) {
       case 38: // Up
+      case 29460: // VK_UP
         if (state.rowIndex > 0) {
           state.rowIndex--;
           if (state.colIndex >= state.rows[state.rowIndex].length) {
@@ -303,6 +367,7 @@ var VirtualKeyboard = (function () {
         }
         break;
       case 40: // Down
+      case 29461: // VK_DOWN
         if (state.rowIndex < state.rows.length - 1) {
           state.rowIndex++;
           if (state.colIndex >= state.rows[state.rowIndex].length) {
@@ -312,54 +377,73 @@ var VirtualKeyboard = (function () {
         }
         break;
       case 37: // Left
+      case 29462: // VK_LEFT
         if (state.colIndex > 0) {
           state.colIndex--;
           setKeyFocus();
         }
         break;
       case 39: // Right
+      case 29463: // VK_RIGHT
         if (state.colIndex < state.rows[state.rowIndex].length - 1) {
           state.colIndex++;
           setKeyFocus();
         }
         break;
       case 13: // Enter
+      case 29443: // VK_ENTER
         var row = state.rows[state.rowIndex];
         if (row && row[state.colIndex]) {
           pressKey(row[state.colIndex].dataset.key);
         }
         break;
       case 27: // Back — close keyboard
+      case 8:  // Backspace
+      case 10009: // Tizen Back
+      case 461: // LG webOS Back
+      case 29444: // VK_BACK
         hide();
         break;
     }
   }
 
-  // Public init — call after login HTML is rendered
+  function switchToLogin() {
+    state.currentScreen = "login";
+    state.formIndex = 0;
+    hide();
+    collectFormItems();
+    setFormFocus();
+  }
+
+  function switchToRegistration() {
+    state.currentScreen = "registration";
+    state.formIndex = 0;
+    hide();
+    collectFormItems();
+    setFormFocus();
+  }
+
   function init(options) {
     options = options || {};
     state.onLogin = options.onLogin || null;
     state.onRegister = options.onRegister || null;
+    state.onBackToLogin = options.onBackToLogin || null;
 
     injectStyles();
+    state.keyboardMode = "full";
     buildKeyboard();
+    state.currentScreen = "login";
     collectFormItems();
     state.formIndex = 0;
     state.focusMode = "form";
     setFormFocus();
 
-    // Attach keydown handler directly (before remote.js, which only runs on home)
     document.addEventListener("keydown", handleKeyDown);
   }
 
   function destroy() {
     document.removeEventListener("keydown", handleKeyDown);
-    if (state.container && state.container.parentNode) {
-      state.container.parentNode.removeChild(state.container);
-    }
-    state.container = null;
-    state.keys = [];
-    state.rows = [];
+    destroyKeyboard();
     state.formItems = [];
     clearFormFocus();
   }
@@ -367,6 +451,8 @@ var VirtualKeyboard = (function () {
   return {
     init: init,
     destroy: destroy,
+    switchToLogin: switchToLogin,
+    switchToRegistration: switchToRegistration,
   };
 })();
 
