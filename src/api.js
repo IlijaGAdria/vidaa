@@ -630,3 +630,84 @@ export async function fetchNewsCountries() {
     throw error;
   }
 }
+
+export async function changePincode(currentPincode, newPincode) {
+  const response = await fetch(`${API_URL}/change/pincode`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json, text/plain, */*",
+      "Authorization": "Bearer " + localStorage.getItem("access_token"),
+      "x-api-auth": "e8cda5c773bc0e85dbee8d96c0277a6ff1ca45d1bec97b43d52e5cc1249d958f",
+      "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+      "device-uid": localStorage.getItem("device_id") || "webbrowser",
+      "language-id": "1",
+      "reskin": reskin
+    },
+    body: JSON.stringify({
+      current_pincode: currentPincode,
+      new_pincode: newPincode
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
+}
+
+export async function lockCategory(pincode, categoryId) {
+  const response = await fetch(`${API_URL}/lock/category`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json, text/plain, */*",
+      "Authorization": "Bearer " + localStorage.getItem("access_token"),
+      "x-api-auth": "b0a06cdcd5f01a21cad8f3639db9bb81d599570820b8953b1b48a9ecbc9c57bf",
+      "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+      "device-uid": localStorage.getItem("device_id") || "webbrowser",
+      "language-id": "1",
+      "reskin": reskin
+    },
+    body: JSON.stringify({
+      pincode: pincode,
+      category_id: categoryId
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
+}
+
+export async function unlockCategory(pincode, categoryId) {
+  const response = await fetch(`${API_URL}/unlock/category`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json, text/plain, */*",
+      "Authorization": "Bearer " + localStorage.getItem("access_token"),
+      "x-api-auth": "75fb74cd606f55802abd959d6438bebc7a4a97aac8f36676b0286173328908c",
+      "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+      "device-uid": localStorage.getItem("device_id") || "webbrowser",
+      "language-id": "1",
+      "reskin": reskin
+    },
+    body: JSON.stringify({
+      pincode: pincode,
+      category_id: categoryId
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Error ${response.status}: ${errorText}`);
+  }
+
+  return response.json();
+}

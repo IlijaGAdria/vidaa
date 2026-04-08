@@ -1,6 +1,6 @@
 import state from "./state.js";
 import { playChannel, switchChannel, stopPlayer, togglePause, getCurrentChannel } from "./player.js";
-import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel, getM3uChannels, getRadios, getMovies, fetchNewsFeed, fetchNewsFilters, getVideoTutorials } from "../api.js";
+import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel, getM3uChannels, getRadios, getMovies, fetchNewsFeed, fetchNewsFilters, getVideoTutorials, lockCategory, unlockCategory } from "../api.js";
 
 // ================================================
 // DOM Helpers
@@ -917,11 +917,118 @@ function showChannelList(categoryId) {
       return ch.category_ids && ch.category_ids.indexOf(categoryId) !== -1;
     });
   } else {
+    var lockedCats = (state.userData && Array.isArray(state.userData.locked_categories)) ? state.userData.locked_categories : [];
     filtered = state.channelsData.filter(function(ch) {
-      return !ch.category_ids || ch.category_ids.indexOf(9) === -1;
+      if (!ch.category_ids || lockedCats.length === 0) return true;
+      for (var i = 0; i < ch.category_ids.length; i++) {
+        if (lockedCats.indexOf(ch.category_ids[i]) !== -1) return false;
+      }
+      return true;
     });
   }
   renderChannelList(filtered);
+}
+
+// ================================================
+// PIN Code Dialog
+// ================================================
+
+function isCategoryLocked(categoryId) {
+  var locked = (state.userData && Array.isArray(state.userData.locked_categories)) ? state.userData.locked_categories : [];
+  return locked.indexOf(categoryId) !== -1;
+}
+
+function showPinDialog(categoryId) {
+  state.pinPendingCategoryId = categoryId;
+  state.pinCode = "";
+  updatePinDots();
+  if (state.pinError) state.pinError.textContent = "";
+  if (state.pinDialog) state.pinDialog.classList.add("visible");
+  state.focusMode = "pindialog";
+}
+
+function hidePinDialog() {
+  if (state.pinDialog) state.pinDialog.classList.remove("visible");
+  state.pinCode = "";
+  state.pinPendingCategoryId = null;
+  updatePinDots();
+}
+
+function updatePinDots() {
+  for (var i = 0; i < 4; i++) {
+    if (state.pinDots[i]) {
+      if (i < state.pinCode.length) {
+        state.pinDots[i].classList.add("filled");
+      } else {
+        state.pinDots[i].classList.remove("filled");
+      }
+    }
+  }
+}
+
+function handlePinDigit(digit) {
+  if (state.pinCode.length >= 4) return;
+  state.pinCode += String(digit);
+  updatePinDots();
+  if (state.pinError) state.pinError.textContent = "";
+
+  if (state.pinCode.length === 4) {
+    var correctPin = (state.userData && state.userData.pincode) ? state.userData.pincode : "0000";
+    if (state.pinCode === correctPin) {
+      // Parental control lock/unlock flow
+      if (state.pinPendingAction) {
+        var action = state.pinPendingAction;
+        var pinStr = state.pinCode;
+        hidePinDialog();
+        if (action.type === "lock") {
+          lockCategory(pinStr, action.categoryId).then(function() {
+            // Update local locked_categories
+            if (!state.userData.locked_categories) state.userData.locked_categories = [];
+            if (state.userData.locked_categories.indexOf(action.categoryId) === -1) {
+              state.userData.locked_categories.push(action.categoryId);
+            }
+            populateParentalPanel();
+            state.parentalRowItems = Array.from(state.parentalRows.querySelectorAll(".parental-row"));
+            if (state.parentalRowItems[state.parentalRowIndex]) {
+              state.parentalRowItems[state.parentalRowIndex].classList.add("active");
+            }
+            updateSubMenuLockIcons();
+          }).catch(function(err) { console.error("Failed to lock category:", err); });
+        } else {
+          unlockCategory(pinStr, action.categoryId).then(function() {
+            var idx = state.userData.locked_categories ? state.userData.locked_categories.indexOf(action.categoryId) : -1;
+            if (idx !== -1) state.userData.locked_categories.splice(idx, 1);
+            populateParentalPanel();
+            state.parentalRowItems = Array.from(state.parentalRows.querySelectorAll(".parental-row"));
+            if (state.parentalRowItems[state.parentalRowIndex]) {
+              state.parentalRowItems[state.parentalRowIndex].classList.add("active");
+            }
+            updateSubMenuLockIcons();
+          }).catch(function(err) { console.error("Failed to unlock category:", err); });
+        }
+        state.pinPendingAction = null;
+        state.focusMode = "parentalcontrol";
+      } else {
+        // Channel category unlock flow
+        var catId = state.pinPendingCategoryId;
+        hidePinDialog();
+        showChannelList(catId);
+        state.focusMode = "channellist";
+      }
+    } else {
+      if (state.pinError) state.pinError.textContent = "Wrong PIN code";
+      state.pinCode = "";
+      updatePinDots();
+    }
+  }
+}
+
+function handlePinBackspace() {
+  if (state.pinCode.length > 0) {
+    state.pinCode = state.pinCode.slice(0, -1);
+    updatePinDots();
+    if (state.pinError) state.pinError.textContent = "";
+  }
 }
 
 function showFavoritesList() {
@@ -1029,6 +1136,9 @@ function hideAllUI() {
   if (state.moviesSubMenu) state.moviesSubMenu.style.display = "none";
   if (state.tutorialSubMenu) state.tutorialSubMenu.style.display = "none";
   if (state.tutorialList) state.tutorialList.style.display = "none";
+  if (state.settingsSubMenu) state.settingsSubMenu.style.display = "none";
+  if (state.accountPanel) state.accountPanel.style.display = "none";
+  if (state.parentalPanel) state.parentalPanel.style.display = "none";
   if (state.countrySubMenu) state.countrySubMenu.style.display = "none";
   if (state.channelList) state.channelList.style.display = "none";
   if (state.radioPanel) state.radioPanel.style.display = "none";
@@ -1048,6 +1158,9 @@ function restoreAllUI() {
   if (state.moviesSubMenu) state.moviesSubMenu.style.display = "";
   if (state.tutorialSubMenu) state.tutorialSubMenu.style.display = "";
   if (state.tutorialList) state.tutorialList.style.display = "";
+  if (state.settingsSubMenu) state.settingsSubMenu.style.display = "";
+  if (state.accountPanel) state.accountPanel.style.display = "";
+  if (state.parentalPanel) state.parentalPanel.style.display = "";
   if (state.countrySubMenu) state.countrySubMenu.style.display = "";
   if (state.channelList) state.channelList.style.display = "";
   if (state.radioPanel) state.radioPanel.style.display = "";
@@ -1227,6 +1340,195 @@ function enterVideoTutorials() {
   showTutorialSubMenu();
   hideChannelsSection();
   state.focusMode = "tutorialsubmenu";
+}
+
+// ================================================
+// Settings sub-menu & Account panel
+// ================================================
+
+function enterSettings() {
+  minimizeMenu();
+  setTimeout(function() {
+    var topIndex = Math.max(0, state.selectedIndex - 3);
+    state.wrapper.style.transform = "translateY(" + (-state.items[topIndex].offsetTop) + "px)";
+  }, 0);
+  showSettingsSubMenu();
+  hideChannelsSection();
+  state.focusMode = "settingssubmenu";
+}
+
+function showSettingsSubMenu() {
+  if (state.settingsSubMenu) state.settingsSubMenu.classList.add("visible");
+  state.settingsSubItems.forEach(function(item) {
+    item.classList.remove("active");
+    item.tabIndex = -1;
+  });
+  var idx = state.settingsSubIndex || 0;
+  if (idx >= state.settingsSubItems.length) idx = 0;
+  state.settingsSubIndex = idx;
+  if (state.settingsSubItems[idx]) {
+    state.settingsSubItems[idx].classList.add("active");
+    state.settingsSubItems[idx].tabIndex = 0;
+  }
+}
+
+function hideSettingsSubMenu() {
+  if (state.settingsSubMenu) state.settingsSubMenu.classList.remove("visible");
+}
+
+function moveSettingsSubFocus(direction) {
+  if (state.settingsSubIndex + direction < 0 || state.settingsSubIndex + direction >= state.settingsSubItems.length) return;
+  state.settingsSubItems[state.settingsSubIndex].tabIndex = -1;
+  state.settingsSubItems[state.settingsSubIndex].classList.remove("active");
+  state.settingsSubIndex += direction;
+  state.settingsSubItems[state.settingsSubIndex].tabIndex = 0;
+  state.settingsSubItems[state.settingsSubIndex].classList.add("active");
+}
+
+function showAccountPanel() {
+  if (!state.accountPanel) return;
+  populateAccountPanel();
+  state.accountPanel.classList.add("visible");
+}
+
+function hideAccountPanel() {
+  if (state.accountPanel) state.accountPanel.classList.remove("visible");
+}
+
+// ================================================
+// Parental Control Panel
+// ================================================
+
+var parentalCategories = [
+  { id: 25, name: "Adria Telekom", icon: "fa-a" },
+  { id: 2, name: "Music", icon: "fa-music" },
+  { id: 8, name: "News", icon: "fa-newspaper" },
+  { id: 3, name: "Sports", icon: "fa-futbol" },
+  { id: 4, name: "Movies", icon: "fa-film" },
+  { id: 5, name: "Children", icon: "fa-child" },
+  { id: 6, name: "Documentaries", icon: "fa-book" },
+  { id: 1, name: "Entertainment", icon: "fa-theater-masks" },
+  { id: 19, name: "Reality", icon: "fa-eye" },
+  { id: 21, name: "4K/UHD", icon: "fa-tv" },
+  { id: 16, name: "Local", icon: "fa-building" },
+  { id: 17, name: "International FTA", icon: "fa-globe" },
+  { id: 18, name: "Camera", icon: "fa-camera" },
+  { id: 9, name: "Adult", icon: "fa-lock" }
+];
+
+function showParentalPanel() {
+  if (!state.parentalPanel) return;
+  populateParentalPanel();
+  state.parentalPanel.classList.add("visible");
+  state.parentalRowIndex = 0;
+  state.parentalRowItems = Array.from(state.parentalRows.querySelectorAll(".parental-row"));
+  if (state.parentalRowItems.length > 0) {
+    state.parentalRowItems[0].classList.add("active");
+  }
+  state.focusMode = "parentalcontrol";
+}
+
+function hideParentalPanel() {
+  if (state.parentalPanel) state.parentalPanel.classList.remove("visible");
+  state.parentalRowItems.forEach(function(r) { r.classList.remove("active"); });
+}
+
+function moveParentalFocus(direction) {
+  if (state.parentalRowIndex + direction < 0 || state.parentalRowIndex + direction >= state.parentalRowItems.length) return;
+  state.parentalRowItems[state.parentalRowIndex].classList.remove("active");
+  state.parentalRowIndex += direction;
+  state.parentalRowItems[state.parentalRowIndex].classList.add("active");
+  var topIdx = Math.max(0, state.parentalRowIndex - 5);
+  state.parentalRows.style.transform = "translateY(" + (-state.parentalRowItems[topIdx].offsetTop) + "px)";
+}
+
+function populateParentalPanel() {
+  while (state.parentalRows.firstChild) {
+    state.parentalRows.removeChild(state.parentalRows.firstChild);
+  }
+  var lockedCats = (state.userData && Array.isArray(state.userData.locked_categories)) ? state.userData.locked_categories : [];
+  parentalCategories.forEach(function(cat) {
+    var isLocked = lockedCats.indexOf(cat.id) !== -1;
+    var row = document.createElement("div");
+    row.className = "parental-row";
+    row.dataset.categoryId = cat.id;
+    row.dataset.locked = isLocked ? "true" : "false";
+    row.innerHTML =
+      '<div class="parental-row-icon"><i class="fa-solid ' + cat.icon + '"></i></div>' +
+      '<div class="parental-row-name">' + cat.name + '</div>' +
+      '<div class="parental-row-status ' + (isLocked ? 'locked' : 'unlocked') + '">' +
+        '<i class="fa-solid ' + (isLocked ? 'fa-lock' : 'fa-lock-open') + '"></i> ' +
+        (isLocked ? 'Locked' : 'Unlocked') +
+      '</div>';
+    state.parentalRows.appendChild(row);
+  });
+}
+
+function toggleParentalLock() {
+  var row = state.parentalRowItems[state.parentalRowIndex];
+  if (!row) return;
+  var catId = parseInt(row.dataset.categoryId, 10);
+  var isLocked = row.dataset.locked === "true";
+  // Store pending action info and show PIN dialog
+  state.pinPendingAction = {
+    type: isLocked ? "unlock" : "lock",
+    categoryId: catId,
+    row: row
+  };
+  state.pinCode = "";
+  updatePinDots();
+  if (state.pinError) state.pinError.textContent = "";
+  if (state.pinDialog) state.pinDialog.classList.add("visible");
+  state.focusMode = "pindialog";
+}
+
+function updateSubMenuLockIcons() {
+  var lockedCats = (state.userData && Array.isArray(state.userData.locked_categories)) ? state.userData.locked_categories : [];
+  var catMap = {
+    "sub-adria-telekom": 25, "sub-music": 2, "sub-news": 8, "sub-sports": 3,
+    "sub-movies": 4, "sub-children": 5, "sub-documentaries": 6, "sub-entertainment": 1,
+    "sub-reality": 19, "sub-general": 1, "sub-4k-uhd": 21, "sub-local": 16,
+    "sub-international-fta": 17, "sub-camera": 18, "sub-adult": 9
+  };
+  if (!state.subItems) return;
+  state.subItems.forEach(function(item) {
+    var existing = item.querySelector(".sub-item-lock");
+    if (existing) existing.remove();
+    var catId = catMap[item.id];
+    if (catId && lockedCats.indexOf(catId) !== -1) {
+      var lock = document.createElement("span");
+      lock.className = "sub-item-lock";
+      lock.innerHTML = '<i class="fa-solid fa-lock"></i>';
+      item.appendChild(lock);
+    }
+  });
+}
+
+function populateAccountPanel() {
+  while (state.accountRows.firstChild) {
+    state.accountRows.removeChild(state.accountRows.firstChild);
+  }
+  var u = state.userData || {};
+  var mac = localStorage.getItem("device_mac") || "N/A";
+  var fields = [
+    { icon: "fa-user", label: "Username", value: u.username || "N/A" },
+    { icon: "fa-envelope", label: "Email", value: u.email || "N/A" },
+    { icon: "fa-box", label: "Package Name", value: u.package_name || "N/A" },
+    { icon: "fa-calendar", label: "Expire Date", value: u.expire_date || "N/A" },
+    { icon: "fa-display", label: "Used Devices", value: u.max_connections_kozmetika || "N/A" },
+    { icon: "fa-code", label: "Software Version", value: "1.0.0" },
+    { icon: "fa-tv", label: "Device Version", value: "N/A" },
+    { icon: "fa-network-wired", label: "MAC Address", value: mac }
+  ];
+  fields.forEach(function(f) {
+    var row = document.createElement("div");
+    row.className = "account-row";
+    row.innerHTML =
+      '<div class="account-row-icon"><i class="fa-solid ' + f.icon + '"></i></div>' +
+      '<div class="account-row-label">' + f.label + '</div>' +
+      '<div class="account-row-value">' + f.value + '</div>';
+    state.accountRows.appendChild(row);
+  });
 }
 
 function showTutorialSubMenu() {
@@ -1678,6 +1980,8 @@ function handleEnter() {
       enterSearch();
     } else if (selectedItem && selectedItem.id === "menu-video-tutorials") {
       enterVideoTutorials();
+    } else if (selectedItem && selectedItem.id === "menu-settings") {
+      enterSettings();
     }
     return;
   }
@@ -1706,8 +2010,13 @@ function handleEnter() {
       showFavoritesList();
       state.focusMode = "channellist";
     } else if (categoryMap[itemId]) {
-      showChannelList(categoryMap[itemId]);
-      state.focusMode = "channellist";
+      var catId = categoryMap[itemId];
+      if (isCategoryLocked(catId)) {
+        showPinDialog(catId);
+      } else {
+        showChannelList(catId);
+        state.focusMode = "channellist";
+      }
     }
     return;
   }
@@ -1826,6 +2135,25 @@ function handleEnter() {
     return;
   }
 
+  // Settings sub-menu — select account or parental control
+  if (state.focusMode === "settingssubmenu") {
+    var settItem = state.settingsSubItems[state.settingsSubIndex];
+    if (settItem && settItem.id === "settings-account") {
+      hideParentalPanel();
+      showAccountPanel();
+    } else if (settItem && settItem.id === "settings-parental") {
+      hideAccountPanel();
+      showParentalPanel();
+    }
+    return;
+  }
+
+  // Parental control — toggle lock on selected category
+  if (state.focusMode === "parentalcontrol") {
+    toggleParentalLock();
+    return;
+  }
+
   // Tutorial sub-menu — select a category to show videos
   if (state.focusMode === "tutorialsubmenu") {
     var tutItem = state.tutorialSubItems[state.tutorialSubIndex];
@@ -1941,6 +2269,10 @@ function handleUp() {
     moveMoviesSubFocus(-1);
   } else if (state.focusMode === "tutorialsubmenu") {
     moveTutorialSubFocus(-1);
+  } else if (state.focusMode === "settingssubmenu") {
+    moveSettingsSubFocus(-1);
+  } else if (state.focusMode === "parentalcontrol") {
+    moveParentalFocus(-1);
   } else if (state.focusMode === "countrysubmenu") {
     moveCountryFocus(-1);
   } else if (state.focusMode === "channellist") {
@@ -1997,6 +2329,10 @@ function handleDown() {
     moveMoviesSubFocus(1);
   } else if (state.focusMode === "tutorialsubmenu") {
     moveTutorialSubFocus(1);
+  } else if (state.focusMode === "settingssubmenu") {
+    moveSettingsSubFocus(1);
+  } else if (state.focusMode === "parentalcontrol") {
+    moveParentalFocus(1);
   } else if (state.focusMode === "countrysubmenu") {
     moveCountryFocus(1);
   } else if (state.focusMode === "channellist") {
@@ -2091,6 +2427,16 @@ function handleLeft() {
   } else if (state.focusMode === "tutoriallist") {
     hideTutorialList();
     state.focusMode = "tutorialsubmenu";
+  } else if (state.focusMode === "settingssubmenu") {
+    hideSettingsSubMenu();
+    hideAccountPanel();
+    hideParentalPanel();
+    expandMenu();
+    showChannelsSection();
+    state.focusMode = "menu";
+  } else if (state.focusMode === "parentalcontrol") {
+    hideParentalPanel();
+    state.focusMode = "settingssubmenu";
   } else if (state.focusMode === "radiosubmenu") {
     hideRadioSubMenu();
     if (state.radioPlaying) stopRadio();
@@ -2186,6 +2532,18 @@ function handleRight() {
 
 // Search: handle alphanumeric key input (desktop fallback)
 function handleSearchKeyPress(e) {
+  // PIN dialog — intercept digit keys and backspace
+  if (state.focusMode === "pindialog") {
+    var key = e.key;
+    if (key === "Backspace") {
+      handlePinBackspace();
+      return true;
+    } else if (key && key.length === 1 && /[0-9]/.test(key)) {
+      handlePinDigit(key);
+      return true;
+    }
+    return true; // swallow all other keys in pin dialog
+  }
   if (state.focusMode !== "searchinput" && state.focusMode !== "searchkeyboard") return false;
   var key = e.key;
   if (key === "Backspace") {
@@ -2202,7 +2560,17 @@ function handleSearchKeyPress(e) {
 }
 
 function handleBack() {
-  if (state.focusMode === "playeroverlay") {
+  if (state.focusMode === "pindialog") {
+    hidePinDialog();
+    state.pinPendingAction = null;
+    // Return to correct context
+    if (state.pinPendingCategoryId !== null) {
+      state.focusMode = "submenu";
+    } else {
+      state.focusMode = "parentalcontrol";
+    }
+    state.pinPendingCategoryId = null;
+  } else if (state.focusMode === "playeroverlay") {
     hidePlayerOverlay();
     state.focusMode = "player";
   } else if (state.focusMode === "player") {
@@ -2245,6 +2613,16 @@ function handleBack() {
   } else if (state.focusMode === "tutoriallist") {
     hideTutorialList();
     state.focusMode = "tutorialsubmenu";
+  } else if (state.focusMode === "settingssubmenu") {
+    hideSettingsSubMenu();
+    hideAccountPanel();
+    hideParentalPanel();
+    expandMenu();
+    showChannelsSection();
+    state.focusMode = "menu";
+  } else if (state.focusMode === "parentalcontrol") {
+    hideParentalPanel();
+    state.focusMode = "settingssubmenu";
   } else if (state.focusMode === "radiosubmenu") {
     hideRadioSubMenu();
     if (state.radioPlaying) stopRadio();

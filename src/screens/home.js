@@ -119,6 +119,19 @@ class HomeScreen {
     state.tutorialListItems = [];
     state.tutorialListIndex = 0;
 
+    // Setup settings sub-menu
+    state.settingsSubMenu = document.getElementById("settings-sub-menu");
+    state.settingsSubItems = Array.from(state.settingsSubMenu.querySelectorAll(".sub-item"));
+    state.settingsSubIndex = 0;
+
+    // Setup account info panel
+    state.accountPanel = document.getElementById("account-panel");
+    state.accountRows = document.getElementById("account-rows");
+
+    // Setup parental control panel
+    state.parentalPanel = document.getElementById("parental-panel");
+    state.parentalRows = document.getElementById("parental-rows");
+
     // Setup news section
     state.newsSection = document.getElementById("news-section");
     state.newsGrid = document.getElementById("news-grid");
@@ -140,6 +153,18 @@ class HomeScreen {
     state.searchResultItems = [];
     state.searchResultIndex = 0;
     state.searchQuery = "";
+
+    // Setup PIN dialog
+    state.pinDialog = document.getElementById("pin-dialog");
+    state.pinDots = [
+      document.getElementById("pin-dot-0"),
+      document.getElementById("pin-dot-1"),
+      document.getElementById("pin-dot-2"),
+      document.getElementById("pin-dot-3")
+    ];
+    state.pinError = document.getElementById("pin-error");
+    state.pinCode = "";
+    state.pinPendingCategoryId = null;
 
     // Load news countries
     fetchNewsCountries().then(function(countries) {
@@ -182,6 +207,33 @@ class HomeScreen {
       loadVideoTutorialCategories([]);
     });
 
+    // Load user account data (before channel rendering so locked_categories is available)
+    try {
+      state.userData = await getUser();
+      console.log("[Settings] User data loaded");
+      // Mark locked categories with lock icon
+      var lockedCats = Array.isArray(state.userData.locked_categories) ? state.userData.locked_categories : [];
+      if (lockedCats.length > 0 && state.subItems) {
+        var catMap = {
+          "sub-adria-telekom": 25, "sub-music": 2, "sub-news": 8, "sub-sports": 3,
+          "sub-movies": 4, "sub-children": 5, "sub-documentaries": 6, "sub-entertainment": 1,
+          "sub-reality": 19, "sub-general": 1, "sub-4k-uhd": 21, "sub-local": 16,
+          "sub-international-fta": 17, "sub-camera": 18, "sub-adult": 9
+        };
+        state.subItems.forEach(function(item) {
+          var catId = catMap[item.id];
+          if (catId && lockedCats.indexOf(catId) !== -1) {
+            var lock = document.createElement("span");
+            lock.className = "sub-item-lock";
+            lock.innerHTML = '<i class="fa-solid fa-lock"></i>';
+            item.appendChild(lock);
+          }
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load user data:", err);
+    }
+
     // Setup radio now-playing panel
     state.radioPanel = document.getElementById("radio-panel");
     state.radioPanelBtns = [
@@ -210,10 +262,15 @@ class HomeScreen {
     // Store raw channel data for filtering
     state.channelsData = channelsData || [];
 
-    // Populate channels from API (exclude adult channels)
+    // Populate channels from API (exclude locked categories)
     if (channelsData && Array.isArray(channelsData)) {
+      var lockedCats = (state.userData && Array.isArray(state.userData.locked_categories)) ? state.userData.locked_categories : [];
       channelsData.forEach(function(ch) {
-        if (ch.category_ids && ch.category_ids.indexOf(9) !== -1) return;
+        if (ch.category_ids && lockedCats.length > 0) {
+          for (var i = 0; i < ch.category_ids.length; i++) {
+            if (lockedCats.indexOf(ch.category_ids[i]) !== -1) return;
+          }
+        }
         var epg = ch.current_epg;
         var name = ch.name || "Unknown";
         var logo = ch.stream_icon || "";

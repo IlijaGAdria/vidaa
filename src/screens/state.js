@@ -109,6 +109,26 @@ const state = {
   tutorialListItems: [],
   tutorialListIndex: 0,
 
+  // Settings state
+  settingsSubMenu: null,
+  settingsSubItems: [],
+  settingsSubIndex: 0,
+  accountPanel: null,
+  accountRows: null,
+  userData: null,
+  parentalPanel: null,
+  parentalRows: null,
+  parentalRowItems: [],
+  parentalRowIndex: 0,
+  pinPendingAction: null,
+
+  // PIN dialog state
+  pinDialog: null,
+  pinDots: [],
+  pinError: null,
+  pinCode: "",
+  pinPendingCategoryId: null,
+
   // Player state
   previousFocusMode: null,   // where the user was before entering player
   activePlaylist: [],         // stream URLs for current player session

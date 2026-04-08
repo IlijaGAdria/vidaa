@@ -112,6 +112,17 @@
   color: #fff;
 }
 
+.sub-item-lock {
+  margin-left: auto;
+  font-size: 0.9vw;
+  color: rgba(255, 255, 255, 0.4);
+  padding-left: 1vw;
+}
+
+.sub-menu .sub-item.active .sub-item-lock {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 /* Country Sub Menu */
 
 .country-sub-menu {
@@ -1107,6 +1118,235 @@
   color: #00b9be;
 }
 
+/* Account Info Panel */
+.account-panel {
+  position: fixed;
+  top: 12vh;
+  left: 26vw;
+  width: 60vw;
+  max-height: 78vh;
+  display: none;
+  flex-direction: column;
+  color: white;
+  overflow: hidden;
+  z-index: 50;
+}
+
+.account-panel.visible {
+  display: flex;
+}
+
+.account-panel-title {
+  font-size: 2.2vw;
+  font-weight: 700;
+  margin-bottom: 2vw;
+  color: #00b9be;
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+}
+
+.account-panel-title i {
+  font-size: 2vw;
+}
+
+.account-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3vw;
+  position: relative;
+  transition: transform 0.25s ease;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  padding: 1.2vw 1.5vw;
+  border-radius: 0.5vw;
+  background: rgba(255,255,255,0.05);
+  gap: 1.5vw;
+}
+
+.account-row-icon {
+  width: 2.5vw;
+  text-align: center;
+  font-size: 1.3vw;
+  color: #00b9be;
+  flex-shrink: 0;
+}
+
+.account-row-label {
+  font-size: 1.1vw;
+  color: rgba(255,255,255,0.5);
+  min-width: 14vw;
+  flex-shrink: 0;
+}
+
+.account-row-value {
+  font-size: 1.3vw;
+  font-weight: 600;
+  color: #fff;
+  flex: 1;
+}
+
+/* Parental Control Panel */
+.parental-panel {
+  position: fixed;
+  top: 12vh;
+  left: 24vw;
+  width: 55vw;
+  height: 80vh;
+  display: none;
+  flex-direction: column;
+  color: white;
+  overflow: hidden;
+  z-index: 50;
+}
+
+.parental-panel.visible {
+  display: flex;
+}
+
+.parental-panel-title {
+  font-size: 2.2vw;
+  font-weight: 700;
+  margin-bottom: 1.5vw;
+  padding-bottom: 1vw;
+  color: #00b9be;
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  flex-shrink: 0;
+}
+
+.parental-panel-title i {
+  font-size: 2vw;
+}
+
+.parental-rows-wrapper {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.parental-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3vw;
+  position: relative;
+  transition: transform 0.25s ease;
+}
+
+.parental-row {
+  display: flex;
+  align-items: center;
+  padding: 1vw 1.5vw;
+  border-radius: 0.5vw;
+  background: rgba(255,255,255,0.05);
+  gap: 1.5vw;
+  cursor: pointer;
+}
+
+.parental-row.active {
+  background: rgba(0,185,190,0.15);
+  outline: 2px solid #00b9be;
+}
+
+.parental-row-icon {
+  width: 2.5vw;
+  text-align: center;
+  font-size: 1.3vw;
+  color: #00b9be;
+  flex-shrink: 0;
+}
+
+.parental-row-name {
+  font-size: 1.2vw;
+  font-weight: 600;
+  color: #fff;
+  flex: 1;
+}
+
+.parental-row-status {
+  font-size: 1vw;
+  padding: 0.3vw 0.8vw;
+  border-radius: 0.3vw;
+  font-weight: 600;
+}
+
+.parental-row-status.locked {
+  background: rgba(255,68,68,0.2);
+  color: #ff4444;
+}
+
+.parental-row-status.unlocked {
+  background: rgba(0,185,190,0.2);
+  color: #00b9be;
+}
+
+/* PIN Code Dialog */
+.pin-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.pin-dialog.visible {
+  display: flex;
+}
+
+.pin-dialog-box {
+  background: linear-gradient(135deg, #1a1040 0%, #2a1555 100%);
+  border-radius: 1.2vw;
+  padding: 3vw 4vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2vw;
+  min-width: 22vw;
+}
+
+.pin-dialog-title {
+  font-size: 2vw;
+  font-weight: 700;
+  color: #fff;
+}
+
+.pin-dialog-dots {
+  display: flex;
+  gap: 1.5vw;
+}
+
+.pin-dot {
+  width: 4vw;
+  height: 0.5vw;
+  border-radius: 0.25vw;
+  background: rgba(255, 255, 255, 0.3);
+  transition: background 0.15s ease;
+}
+
+.pin-dot.filled {
+  background: #fff;
+}
+
+.pin-dialog-hint {
+  font-size: 1vw;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pin-dialog-error {
+  font-size: 1vw;
+  color: #ff4444;
+  min-height: 1.2vw;
+}
+
 </style>
 
 <!-- Video Player -->
@@ -1256,6 +1496,26 @@
 <div class="channel-list" id="tutorial-list">
 </div>
 
+<!-- Settings Sub Menu -->
+<div class="sub-menu" id="settings-sub-menu">
+  <div class="sub-item active" id="settings-account" tabindex="0"><span class="sub-icon"><i class="fa-solid fa-user"></i></span>Account</div>
+  <div class="sub-item" id="settings-parental" tabindex="-1"><span class="sub-icon"><i class="fa-solid fa-shield-halved"></i></span>Parental Control</div>
+</div>
+
+<!-- Account Info Panel -->
+<div class="account-panel" id="account-panel">
+  <div class="account-panel-title"><i class="fa-solid fa-circle-user"></i> Account Info</div>
+  <div class="account-rows" id="account-rows"></div>
+</div>
+
+<!-- Parental Control Panel -->
+<div class="parental-panel" id="parental-panel">
+  <div class="parental-panel-title"><i class="fa-solid fa-shield-halved"></i> Parental Control</div>
+  <div class="parental-rows-wrapper">
+    <div class="parental-rows" id="parental-rows"></div>
+  </div>
+</div>
+
 <!-- Search Section -->
 <div class="search-section" id="search-section">
   <div class="search-input-bar">
@@ -1313,6 +1573,21 @@
 
 <!-- Channel List (filtered category view) -->
 <div class="channel-list" id="channel-list">
+</div>
+
+<!-- PIN Code Dialog -->
+<div class="pin-dialog" id="pin-dialog">
+  <div class="pin-dialog-box">
+    <div class="pin-dialog-title">PIN Code</div>
+    <div class="pin-dialog-dots" id="pin-dots">
+      <div class="pin-dot" id="pin-dot-0"></div>
+      <div class="pin-dot" id="pin-dot-1"></div>
+      <div class="pin-dot" id="pin-dot-2"></div>
+      <div class="pin-dot" id="pin-dot-3"></div>
+    </div>
+    <div class="pin-dialog-error" id="pin-error"></div>
+    <div class="pin-dialog-hint">Default PIN code is 0000</div>
+  </div>
 </div>
 
 <!-- Radio Now Playing Panel -->
