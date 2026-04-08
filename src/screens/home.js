@@ -1,8 +1,8 @@
-import { getChannels, getInternetChannelFilters, getMovies, getUser, fetchNewsCountries, fetchNewsFeed } from "../api.js";
+import { getChannels, getInternetChannelFilters, getMovies, getUser, fetchNewsCountries, fetchNewsFeed, getVideoTutorialCategories, getVideoTutorials } from "../api.js";
 import Remote from "../remote.js";
 import { fetchWeather } from "../weather_api.js";
 import state from "./state.js";
-import { handler, loadInternetCountries, loadMovieCategories, loadNewsCountries } from "./navigation.js";
+import { handler, loadInternetCountries, loadMovieCategories, loadNewsCountries, loadVideoTutorialCategories } from "./navigation.js";
 
 // Format EPG datetime string to HH:MM
 function formatEpgTime(datetimeStr) {
@@ -103,6 +103,22 @@ class HomeScreen {
     state.moviesSubMenu.appendChild(state.moviesSubWrapper);
     state.moviesSubItems = [];
 
+    // Setup video tutorials sub-menu
+    state.tutorialSubMenu = document.getElementById("tutorial-sub-menu");
+    state.tutorialSubWrapper = document.createElement("div");
+    state.tutorialSubWrapper.style.cssText = "position: relative; transition: transform 0.25s ease;";
+    while (state.tutorialSubMenu.firstChild) state.tutorialSubWrapper.appendChild(state.tutorialSubMenu.firstChild);
+    state.tutorialSubMenu.appendChild(state.tutorialSubWrapper);
+    state.tutorialSubItems = [];
+
+    // Setup tutorial video list
+    state.tutorialList = document.getElementById("tutorial-list");
+    state.tutorialListWrapper = document.createElement("div");
+    state.tutorialListWrapper.style.cssText = "position: relative; transition: transform 0.25s ease;";
+    state.tutorialList.appendChild(state.tutorialListWrapper);
+    state.tutorialListItems = [];
+    state.tutorialListIndex = 0;
+
     // Setup news section
     state.newsSection = document.getElementById("news-section");
     state.newsGrid = document.getElementById("news-grid");
@@ -147,6 +163,23 @@ class HomeScreen {
       console.error("Failed to load movie categories:", err);
       state.moviesCategories = [];
       loadMovieCategories([]);
+    });
+
+    // Load video tutorial categories and videos from API
+    Promise.all([getVideoTutorialCategories(), getVideoTutorials()]).then(function(results) {
+      var catData = results[0];
+      var vidData = results[1];
+      var categories = Array.isArray(catData) ? catData : (catData && catData.data ? catData.data : []);
+      var videos = Array.isArray(vidData) ? vidData : (vidData && vidData.data ? vidData.data : []);
+      state.tutorialCategories = categories;
+      state.tutorialVideos = videos;
+      loadVideoTutorialCategories(categories);
+      console.log("[Tutorials] Loaded", categories.length, "categories,", videos.length, "videos");
+    }).catch(function(err) {
+      console.error("Failed to load video tutorials:", err);
+      state.tutorialCategories = [];
+      state.tutorialVideos = [];
+      loadVideoTutorialCategories([]);
     });
 
     // Setup radio now-playing panel

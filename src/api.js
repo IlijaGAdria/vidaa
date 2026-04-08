@@ -550,6 +550,60 @@ export async function fetchNewsFilters({ country_id = "" } = {}) {
   }
 }
 
+export async function getVideoTutorials() {
+  try {
+    const response = await fetch(`${API_URL}/video-tutorials`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+        "device-uid": localStorage.getItem("device_id") || "webbrowser",
+        "language-id": String(getLanguage()),
+        "pn-token": "null",
+        "reskin": reskin,
+        "x-api-auth": "d029a78435bc2ebfdb0f452a14e09db2bbb44655607db8d14af41d5bb7c4b791"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("getVideoTutorials error:", error);
+    throw error;
+  }
+}
+
+export async function getVideoTutorialCategories() {
+  try {
+    const response = await fetch(`${API_URL}/video-tutorials/categories`, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+        "device-uid": localStorage.getItem("device_id") || "webbrowser",
+        "language-id": String(getLanguage()),
+        "pn-token": "null",
+        "reskin": reskin,
+        "x-api-auth": "3801e6c0a213b83ba1c38161ae6b8f624a3f5bb9f186616fdc206183e517ed7e"
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("getVideoTutorialCategories error:", error);
+    throw error;
+  }
+}
+
 export async function fetchNewsCountries() {
   try {
     const response = await fetch(`${API_URL}/news/countries`, {

@@ -1,6 +1,6 @@
 import state from "./state.js";
 import { playChannel, switchChannel, stopPlayer, togglePause, getCurrentChannel } from "./player.js";
-import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel, getM3uChannels, getRadios, getMovies, fetchNewsFeed, fetchNewsFilters } from "../api.js";
+import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel, getM3uChannels, getRadios, getMovies, fetchNewsFeed, fetchNewsFilters, getVideoTutorials } from "../api.js";
 
 // ================================================
 // DOM Helpers
@@ -1027,6 +1027,8 @@ function hideAllUI() {
   if (state.radioSubMenu) state.radioSubMenu.style.display = "none";
   if (state.favSubMenu) state.favSubMenu.style.display = "none";
   if (state.moviesSubMenu) state.moviesSubMenu.style.display = "none";
+  if (state.tutorialSubMenu) state.tutorialSubMenu.style.display = "none";
+  if (state.tutorialList) state.tutorialList.style.display = "none";
   if (state.countrySubMenu) state.countrySubMenu.style.display = "none";
   if (state.channelList) state.channelList.style.display = "none";
   if (state.radioPanel) state.radioPanel.style.display = "none";
@@ -1044,6 +1046,8 @@ function restoreAllUI() {
   if (state.radioSubMenu) state.radioSubMenu.style.display = "";
   if (state.favSubMenu) state.favSubMenu.style.display = "";
   if (state.moviesSubMenu) state.moviesSubMenu.style.display = "";
+  if (state.tutorialSubMenu) state.tutorialSubMenu.style.display = "";
+  if (state.tutorialList) state.tutorialList.style.display = "";
   if (state.countrySubMenu) state.countrySubMenu.style.display = "";
   if (state.channelList) state.channelList.style.display = "";
   if (state.radioPanel) state.radioPanel.style.display = "";
@@ -1208,6 +1212,128 @@ function enterMovies() {
   showMoviesSubMenu();
   hideChannelsSection();
   state.focusMode = "moviessubmenu";
+}
+
+// ================================================
+// Video Tutorials entry
+// ================================================
+
+function enterVideoTutorials() {
+  minimizeMenu();
+  setTimeout(function() {
+    var topIndex = Math.max(0, state.selectedIndex - 3);
+    state.wrapper.style.transform = "translateY(" + (-state.items[topIndex].offsetTop) + "px)";
+  }, 0);
+  showTutorialSubMenu();
+  hideChannelsSection();
+  state.focusMode = "tutorialsubmenu";
+}
+
+function showTutorialSubMenu() {
+  if (state.tutorialSubMenu) state.tutorialSubMenu.classList.add("visible");
+  state.tutorialSubItems.forEach(function(item) {
+    item.classList.remove("active");
+    item.tabIndex = -1;
+  });
+  var idx = state.tutorialSubIndex || 0;
+  if (idx >= state.tutorialSubItems.length) idx = 0;
+  state.tutorialSubIndex = idx;
+  if (state.tutorialSubItems[idx]) {
+    state.tutorialSubItems[idx].classList.add("active");
+    state.tutorialSubItems[idx].tabIndex = 0;
+    var topIdx = Math.max(0, idx - 3);
+    state.tutorialSubWrapper.style.transform = "translateY(" + (-state.tutorialSubItems[topIdx].offsetTop) + "px)";
+  }
+}
+
+function hideTutorialSubMenu() {
+  if (state.tutorialSubMenu) state.tutorialSubMenu.classList.remove("visible");
+}
+
+function moveTutorialSubFocus(direction) {
+  if (state.tutorialSubIndex + direction < 0 || state.tutorialSubIndex + direction >= state.tutorialSubItems.length) return;
+  state.tutorialSubItems[state.tutorialSubIndex].tabIndex = -1;
+  state.tutorialSubItems[state.tutorialSubIndex].classList.remove("active");
+  state.tutorialSubIndex += direction;
+  state.tutorialSubItems[state.tutorialSubIndex].tabIndex = 0;
+  state.tutorialSubItems[state.tutorialSubIndex].classList.add("active");
+  var topIdx = Math.max(0, state.tutorialSubIndex - 3);
+  state.tutorialSubWrapper.style.transform = "translateY(" + (-state.tutorialSubItems[topIdx].offsetTop) + "px)";
+}
+
+function showTutorialList(categoryId) {
+  var videos = (state.tutorialVideos || []).filter(function(v) {
+    return v.category_id === categoryId;
+  });
+  renderTutorialList(videos);
+}
+
+function renderTutorialList(videos) {
+  while (state.tutorialListWrapper.firstChild) {
+    state.tutorialListWrapper.removeChild(state.tutorialListWrapper.firstChild);
+  }
+  state.tutorialListItems = [];
+
+  if (!videos || videos.length === 0) {
+    var empty = document.createElement("div");
+    empty.className = "channel-list-empty";
+    empty.innerHTML = '<i class="fa-solid fa-video"></i><span>No tutorials available</span>';
+    state.tutorialListWrapper.appendChild(empty);
+    if (state.tutorialList) {
+      state.tutorialList.classList.add("visible");
+      state.tutorialList.classList.add("shifted");
+    }
+    return;
+  }
+
+  videos.forEach(function(vid, idx) {
+    var item = document.createElement("div");
+    item.className = "channel-list-item";
+    item.tabIndex = -1;
+    item.dataset.stream = vid.src || "";
+    // Clean up name: remove extension, replace underscores
+    var displayName = (vid.name || "").replace(/\.mp4$/i, "").replace(/_/g, " ");
+    item.innerHTML =
+      '<span class="cl-number">' + (idx + 1) + '.</span>' +
+      '<i class="fa-solid fa-circle-play" style="font-size:2vw;opacity:0.7;"></i>' +
+      '<span class="cl-name">' + displayName + '</span>' +
+      '<i class="fa-solid fa-circle-play cl-play"></i>';
+    state.tutorialListWrapper.appendChild(item);
+  });
+
+  state.tutorialListItems = Array.from(state.tutorialList.querySelectorAll(".channel-list-item"));
+  if (state.tutorialList) {
+    state.tutorialList.classList.add("visible");
+    state.tutorialList.classList.add("shifted");
+  }
+  state.tutorialListIndex = 0;
+
+  state.tutorialListItems.forEach(function(item) {
+    item.classList.remove("active");
+    item.tabIndex = -1;
+  });
+  if (state.tutorialListItems[0]) {
+    state.tutorialListItems[0].classList.add("active");
+    state.tutorialListItems[0].tabIndex = 0;
+  }
+}
+
+function hideTutorialList() {
+  if (state.tutorialList) {
+    state.tutorialList.classList.remove("visible");
+    state.tutorialList.classList.remove("shifted");
+  }
+}
+
+function moveTutorialListFocus(direction) {
+  if (state.tutorialListIndex + direction < 0 || state.tutorialListIndex + direction >= state.tutorialListItems.length) return;
+  state.tutorialListItems[state.tutorialListIndex].tabIndex = -1;
+  state.tutorialListItems[state.tutorialListIndex].classList.remove("active");
+  state.tutorialListIndex += direction;
+  state.tutorialListItems[state.tutorialListIndex].tabIndex = 0;
+  state.tutorialListItems[state.tutorialListIndex].classList.add("active");
+  var topIdx = Math.max(0, state.tutorialListIndex - 3);
+  state.tutorialListWrapper.style.transform = "translateY(" + (-state.tutorialListItems[topIdx].offsetTop) + "px)";
 }
 
 function showFavTvChannels() {
@@ -1550,6 +1676,8 @@ function handleEnter() {
       enterNews();
     } else if (selectedItem && selectedItem.id === "menu-search") {
       enterSearch();
+    } else if (selectedItem && selectedItem.id === "menu-video-tutorials") {
+      enterVideoTutorials();
     }
     return;
   }
@@ -1698,6 +1826,27 @@ function handleEnter() {
     return;
   }
 
+  // Tutorial sub-menu — select a category to show videos
+  if (state.focusMode === "tutorialsubmenu") {
+    var tutItem = state.tutorialSubItems[state.tutorialSubIndex];
+    if (tutItem && tutItem.dataset.categoryId) {
+      var tutCatId = parseInt(tutItem.dataset.categoryId, 10);
+      showTutorialList(tutCatId);
+      state.focusMode = "tutoriallist";
+    }
+    return;
+  }
+
+  // Tutorial video list — play selected tutorial
+  if (state.focusMode === "tutoriallist") {
+    var tutVid = state.tutorialListItems[state.tutorialListIndex];
+    if (tutVid && tutVid.dataset.stream) {
+      var tutStreams = state.tutorialListItems.map(function(i) { return i.dataset.stream; }).filter(Boolean);
+      enterPlayer(tutVid.dataset.stream, tutStreams, state.tutorialListIndex);
+    }
+    return;
+  }
+
   // Country sub-menu — select country to load m3u channels
   if (state.focusMode === "countrysubmenu") {
     var countryItem = state.countryItems[state.countryIndex];
@@ -1790,10 +1939,14 @@ function handleUp() {
     moveFavSubFocus(-1);
   } else if (state.focusMode === "moviessubmenu") {
     moveMoviesSubFocus(-1);
+  } else if (state.focusMode === "tutorialsubmenu") {
+    moveTutorialSubFocus(-1);
   } else if (state.focusMode === "countrysubmenu") {
     moveCountryFocus(-1);
   } else if (state.focusMode === "channellist") {
     moveChannelListFocus(-1);
+  } else if (state.focusMode === "tutoriallist") {
+    moveTutorialListFocus(-1);
   } else if (state.focusMode === "channels") {
     moveChannelRow(-1);
   } else if (state.focusMode === "radiopanel") {
@@ -1842,10 +1995,14 @@ function handleDown() {
     moveFavSubFocus(1);
   } else if (state.focusMode === "moviessubmenu") {
     moveMoviesSubFocus(1);
+  } else if (state.focusMode === "tutorialsubmenu") {
+    moveTutorialSubFocus(1);
   } else if (state.focusMode === "countrysubmenu") {
     moveCountryFocus(1);
   } else if (state.focusMode === "channellist") {
     moveChannelListFocus(1);
+  } else if (state.focusMode === "tutoriallist") {
+    moveTutorialListFocus(1);
   } else if (state.focusMode === "channels") {
     moveChannelRow(1);
   } else if (state.focusMode === "radiopanel") {
@@ -1926,6 +2083,14 @@ function handleLeft() {
     expandMenu();
     showChannelsSection();
     state.focusMode = "menu";
+  } else if (state.focusMode === "tutorialsubmenu") {
+    hideTutorialSubMenu();
+    expandMenu();
+    showChannelsSection();
+    state.focusMode = "menu";
+  } else if (state.focusMode === "tutoriallist") {
+    hideTutorialList();
+    state.focusMode = "tutorialsubmenu";
   } else if (state.focusMode === "radiosubmenu") {
     hideRadioSubMenu();
     if (state.radioPlaying) stopRadio();
@@ -2072,6 +2237,14 @@ function handleBack() {
     expandMenu();
     showChannelsSection();
     state.focusMode = "menu";
+  } else if (state.focusMode === "tutorialsubmenu") {
+    hideTutorialSubMenu();
+    expandMenu();
+    showChannelsSection();
+    state.focusMode = "menu";
+  } else if (state.focusMode === "tutoriallist") {
+    hideTutorialList();
+    state.focusMode = "tutorialsubmenu";
   } else if (state.focusMode === "radiosubmenu") {
     hideRadioSubMenu();
     if (state.radioPlaying) stopRadio();
@@ -2149,6 +2322,36 @@ export function loadMovieCategories(categories) {
   state.moviesSubItems = Array.from(state.moviesSubMenu.querySelectorAll(".sub-item"));
   state.moviesSubIndex = 0;
   console.log("[Movies] Loaded", state.moviesSubItems.length, "category items");
+}
+
+export function loadVideoTutorialCategories(categories) {
+  while (state.tutorialSubWrapper.firstChild) {
+    state.tutorialSubWrapper.removeChild(state.tutorialSubWrapper.firstChild);
+  }
+  if (!categories || categories.length === 0) {
+    var msg = document.createElement("div");
+    msg.className = "no-results-msg";
+    msg.style.cssText = "color: rgba(255,255,255,0.5); font-size: 1.4vw; padding: 3vw 1.5vw; text-align: center; width: 100%;";
+    msg.textContent = "No tutorials";
+    state.tutorialSubWrapper.appendChild(msg);
+    state.tutorialSubItems = [];
+    state.tutorialSubIndex = 0;
+    return;
+  }
+  categories.forEach(function(cat, idx) {
+    var item = document.createElement("div");
+    item.className = "sub-item";
+    if (idx === 0) item.classList.add("active");
+    item.tabIndex = idx === 0 ? 0 : -1;
+    item.dataset.categoryId = cat.id;
+    item.innerHTML = '<span class="sub-icon">' +
+      (cat.icon_src ? '<img src="' + cat.icon_src + '" style="width:100%;height:100%;object-fit:contain;">' : '<i class="fa-solid fa-video"></i>') +
+      '</span>' + cat.category_name;
+    state.tutorialSubWrapper.appendChild(item);
+  });
+  state.tutorialSubItems = Array.from(state.tutorialSubMenu.querySelectorAll(".sub-item"));
+  state.tutorialSubIndex = 0;
+  console.log("[Tutorials] Loaded", state.tutorialSubItems.length, "category items");
 }
 
 export function loadInternetCountries(countries) {

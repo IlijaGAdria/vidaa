@@ -97,6 +97,18 @@ const state = {
   radioPlaying: null,       // currently playing radio object
   radioAudio: null,          // Audio element for radio playback
 
+  // Video tutorials state
+  tutorialSubMenu: null,
+  tutorialSubItems: [],
+  tutorialSubWrapper: null,
+  tutorialSubIndex: 0,
+  tutorialCategories: [],
+  tutorialVideos: [],
+  tutorialList: null,
+  tutorialListWrapper: null,
+  tutorialListItems: [],
+  tutorialListIndex: 0,
+
   // Player state
   previousFocusMode: null,   // where the user was before entering player
   activePlaylist: [],         // stream URLs for current player session
