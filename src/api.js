@@ -4,6 +4,38 @@ const reskin = "adria";
 
 import { getLanguage } from "./language.js";
 
+// ─── Shared helpers ───────────────────────────────────────
+
+function authHeaders(xApiAuth) {
+  return {
+    "Content-Type": "application/json",
+    "Accept": "application/json, text/plain, */*",
+    "Authorization": "Bearer " + localStorage.getItem("access_token"),
+    "x-api-auth": xApiAuth,
+    "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+    "device-uid": localStorage.getItem("device_id") || "webbrowser",
+    "language-id": String(getLanguage()),
+    "reskin": reskin
+  };
+}
+
+async function apiRequest(endpoint, { method = "GET", xApiAuth, headers, body, label } = {}) {
+  const url = endpoint.startsWith("http") ? endpoint : `${API_URL}/${endpoint}`;
+  const opts = {
+    method,
+    headers: headers || authHeaders(xApiAuth),
+  };
+  if (body !== undefined) opts.body = body;
+
+  const response = await fetch(url, opts);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+// ─── Auth ─────────────────────────────────────────────────
+
 export async function login(username, password) {
 
   console.log("[Login] Attempting login for username:", username);
@@ -67,35 +99,15 @@ export async function login(username, password) {
   }
 }
 
+// ─── Channels ─────────────────────────────────────────────
+
 export async function getChannels() {
   try {
-    const response = await fetch(`${API_URL}/channels`, {
+    return await apiRequest("channels", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-        "x-api-auth": "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
-        "device-uid": localStorage.getItem("device_id") || "webbrowser",
-        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
-        "language-id": "1",
-        "reskin": reskin
-      },
-      body: JSON.stringify({
-        category: "",
-        filter: "",
-        sort: "",
-        epgs: 2
-      })
+      xApiAuth: "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
+      body: JSON.stringify({ category: "", filter: "", sort: "", epgs: 2 }),
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    //console.log("Channels:", data);
-
-    return data;
   } catch (error) {
     console.error("Error:", error);
   }
@@ -103,33 +115,14 @@ export async function getChannels() {
 
 export async function fetchChannelEpg(channelId) {
   try {
-    const response = await fetch(`${API_URL}/epg/channel/${channelId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
-      }
+    const result = await apiRequest(`epg/channel/${channelId}`, {
+      headers: { "Content-Type": "application/json" },
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    // Handle wrapped response: { success, data }
-    if (!result || result.success === false) {
-      return null;
-    }
-
+    if (!result || result.success === false) return null;
     const data = result.data;
-
-    if (!Array.isArray(data) || data.length === 0) {
-      return null;
-    }
-
-    // Same as BrightScript → take current program (first item)
+    if (!Array.isArray(data) || data.length === 0) return null;
     return data[0];
-
   } catch (error) {
     console.error("Failed to fetch EPG:", error);
     return null;
@@ -137,89 +130,32 @@ export async function fetchChannelEpg(channelId) {
 }
 
 export async function addFavoriteChannel(channelId) {
-  const response = await fetch(`${API_URL}/favorite/add`, {
+  return apiRequest("favorite/add", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json, text/plain, */*",
-      "Authorization": "Bearer " + localStorage.getItem("access_token"),
-      "x-api-auth": "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
-      "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
-      "device-uid": localStorage.getItem("device_id") || "webbrowser",
-      "language-id": "1",
-      "reskin": reskin
-    },
-    body: JSON.stringify({
-      channel_id: channelId
-    })
+    xApiAuth: "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
+    body: JSON.stringify({ channel_id: channelId }),
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Error ${response.status}: ${errorText}`);
-  }
-
-  return response.json();
 }
 
 export async function removeFavoriteChannel(channelId) {
-  const response = await fetch(`${API_URL}/favorite/remove`, {
+  return apiRequest("favorite/remove", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json, text/plain, */*",
-      "Authorization": "Bearer " + localStorage.getItem("access_token"),
-      "x-api-auth": "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
-      "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
-      "device-uid": localStorage.getItem("device_id") || "webbrowser",
-      "language-id": "1",
-      "reskin": reskin
-    },
-    body: JSON.stringify({
-      channel_id: channelId
-    })
+    xApiAuth: "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
+    body: JSON.stringify({ channel_id: channelId }),
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Error ${response.status}: ${errorText}`);
-  }
-
-  return response.json();
 }
 
 export async function fetchFavorites() {
-
-  const headers = {
-    "accept": "application/json, text/plain, */*",
-    "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
-    "authorization": "Bearer " + localStorage.getItem("access_token"),
-    "device-mac": localStorage.getItem("device_mac"),
-    "device-uid": localStorage.getItem("device_uid") || localStorage.getItem("device_id") || "webbrowser",
-    "language-id": "1",
-    "reskin": "adria",
-    "x-api-auth": "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0"
-  };
-
   try {
-    const response = await fetch(`${API_URL}/favorites`, {
+    const data = await apiRequest("favorites", {
       method: "POST",
-      headers: headers,
-      body: null
+      xApiAuth: "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
+      body: null,
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
     console.log("[Favorites] API response:", data);
-
-    // Return the channels array directly
     var channels = data.channels || data.data || data;
     if (!Array.isArray(channels)) channels = [];
     return channels;
-
   } catch (error) {
     console.error("Error fetching favorites:", error);
     throw error;
@@ -229,28 +165,19 @@ export async function fetchFavorites() {
 // Prints customer centar section inside login page
 export async function getInfo() {
   try {
-    const response = await fetch(`${API_URL}/info?language_id=undefined`, {
-      method: "GET",
+    return await apiRequest("info?language_id=undefined", {
       headers: {
         "Accept": "application/json, text/plain, */*",
         "Content-Type": "application/json",
-        "Authorization": "Bearer null", // No token for this endpoint
+        "Authorization": "Bearer null",
         "device-mac": "a1:b2:c3:d4:e5",
         "device-uid": "webbrowser",
         "language-id": "null",
         "pn-token": "null",
         "reskin": reskin,
         "x-api-auth": "2124584bd2314798d3e0bdc34b0764b20c6bea94b539f34f11f2ee9fc3c0dc3e"
-      }
+      },
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    return data;
   } catch (error) {
     console.error("Fetch error:", error);
   }
@@ -259,26 +186,9 @@ export async function getInfo() {
 
 export async function getInternetChannelFilters() {
   try {
-    const response = await fetch(`${API_URL}/internet-channels/filters`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-        "X-API-AUTH": "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
-        "Language-Id": String(getLanguage()),
-        "Device-Uid": localStorage.getItem("device_id") || "webbrowser",
-        "Reskin": reskin
-      }
+    return await apiRequest("internet-channels/filters", {
+      xApiAuth: "450ac2f9c033ddc3b7e52f502d51ecd487844ecc9120603f2cf5a9f2c5a17de0",
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log("Filters:", data);
-    return data;
-
   } catch (error) {
     console.error("Request failed:", error);
   }
@@ -286,28 +196,9 @@ export async function getInternetChannelFilters() {
 
 export async function getM3uChannels(countryId = 196) {
   try {
-    const response = await fetch(`${API_URL}/m3u/channels/?country_id=${countryId}`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json, text/plain, */*",
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-        "X-API-AUTH": "b16cf34aeb587180773910bc632801b15d192286398b8000011adaa1e86f8f6b",
-        "Device-Mac": "a1:b2:c3:d4:e5",
-        "Device-Uid": localStorage.getItem("device_id") || "webbrowser",
-        "Language-Id": String(getLanguage()),
-        "Pn-Token": "null",
-        "Reskin": "adria"
-      }
+    return await apiRequest(`m3u/channels/?country_id=${countryId}`, {
+      xApiAuth: "b16cf34aeb587180773910bc632801b15d192286398b8000011adaa1e86f8f6b",
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log("M3U channels:", data);
-    return data;
-
   } catch (error) {
     console.error("Request failed:", error);
     throw error;
@@ -316,28 +207,9 @@ export async function getM3uChannels(countryId = 196) {
 
 export async function getChannelCategories(channelId) {
   try {
-    const response = await fetch(`${API_URL}/channel/categories/${channelId}`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json, text/plain, */*",
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-        "X-API-AUTH": "9c8c3285ee3bf67ba5f552d935eec1ad2bd81d22bff54e1b306c8cecabc247a1",
-        "Device-Mac": "a1:b2:c3:d4:e5",
-        "Device-Uid": localStorage.getItem("device_id") || "webbrowser",
-        "Language-Id": String(getLanguage()),
-        "Pn-Token": "null",
-        "Reskin": "adria"
-      }
+    return await apiRequest(`channel/categories/${channelId}`, {
+      xApiAuth: "9c8c3285ee3bf67ba5f552d935eec1ad2bd81d22bff54e1b306c8cecabc247a1",
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log("Channel categories:", data);
-    return data;
-
   } catch (error) {
     console.error("Request failed:", error);
     throw error;
@@ -347,28 +219,9 @@ export async function getChannelCategories(channelId) {
 
 export async function getBackgroundImages() {
   try {
-    const response = await fetch(`${API_URL}/background-images`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json, text/plain, */*",
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-        "x-api-auth": "33989334f4547289aa5e95e4ec927ed2829b86c4dfba6f0e70e369a9437c9f42",
-        "language-id": "1",
-        "device-mac": "a1:b2:c3:d4:e5",
-        "device-uid": localStorage.getItem("device_id") || "webbrowser",
-        "reskin": reskin
-        
-      }
+    return await apiRequest("background-images", {
+      xApiAuth: "33989334f4547289aa5e95e4ec927ed2829b86c4dfba6f0e70e369a9437c9f42",
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log(data);
-    return data;
-
   } catch (error) {
     console.error("Fetch error:", error);
   }
@@ -376,27 +229,9 @@ export async function getBackgroundImages() {
 
 export async function getUser() {
   try {
-    const response = await fetch(`${API_URL}/user`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json, text/plain, */*",
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-        "x-api-auth": "6c61c2382968becd538d8b2991dbca357546842a8fd08261cc264b5b6e4ac29a",
-        "language-id": "1",
-        "device-mac": "a1:b2:c3:d4:e5",
-        "device-uid": localStorage.getItem("device_id") || "webbrowser",
-        "reskin": reskin
-      }
+    return await apiRequest("user", {
+      xApiAuth: "6c61c2382968becd538d8b2991dbca357546842a8fd08261cc264b5b6e4ac29a",
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log(data);
-    return data;
-
   } catch (error) {
     console.error("Fetch error:", error);
   }
@@ -404,35 +239,11 @@ export async function getUser() {
 
 export async function getRadios() {
   try {
-    const response = await fetch(
-      `${API_URL}/radios/p?per_page=100&page=1`,
-      {
-        method: "POST",
-        headers: {
-          "Accept": "application/json, text/plain, */*",
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + localStorage.getItem("access_token"),
-          "x-api-auth": "a092faa42c38ed67a345a017a99d580f125b19c29ba84f3ebb4152e805328b93",
-          "language-id": String(getLanguage()),
-          "device-mac": "a1:b2:c3:d4:e5",
-          "device-uid": localStorage.getItem("device_id") || "webbrowser",
-          "reskin": reskin,
-        },
-        body: JSON.stringify({
-          category: ""
-        }),
-          
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log(data);
-    return data;
-
+    return await apiRequest("radios/p?per_page=100&page=1", {
+      method: "POST",
+      xApiAuth: "a092faa42c38ed67a345a017a99d580f125b19c29ba84f3ebb4152e805328b93",
+      body: JSON.stringify({ category: "" }),
+    });
   } catch (error) {
     console.error("Fetch error:", error);
     throw error;
@@ -441,27 +252,17 @@ export async function getRadios() {
 
 export async function getMovies() {
   try {
-    // Direct request first, fall back to CORS proxy for local development
     var url = `${API_URL}/movies/filter`;
-    var headers = {
-      "Content-Type": "application/json",
-      "Accept": "application/json, text/plain, */*",
-      "Authorization": "Bearer " + localStorage.getItem("access_token"),
-      "x-api-auth": "6b20c954a19c883a5c38ae9e6ecaf83f4984aaeca6c3b7317a0f2bfe97f8a6cb",
-      "language-id": String(getLanguage()),
-      "device-uid": localStorage.getItem("device_id") || "webbrowser",
-      "reskin": reskin
-    };
+    var h = authHeaders("6b20c954a19c883a5c38ae9e6ecaf83f4984aaeca6c3b7317a0f2bfe97f8a6cb");
 
     var response;
     try {
-      response = await fetch(url, { method: "POST", headers: headers, body: null });
+      response = await fetch(url, { method: "POST", headers: h, body: null });
     } catch (e) {
-      // CORS blocked — use proxy for local development
       console.warn("[Movies] Direct request failed (CORS), trying proxy...");
       response = await fetch("https://corsproxy.io/?" + encodeURIComponent(url), {
         method: "POST",
-        headers: headers,
+        headers: h,
         body: null
       });
     }
@@ -473,7 +274,6 @@ export async function getMovies() {
     const data = await response.json();
     console.log("Movies:", data);
     return data;
-
   } catch (error) {
     console.error("Fetch error:", error);
     throw error;
@@ -487,32 +287,10 @@ export async function fetchNewsFeed({
   page = 1
 } = {}) {
   try {
-    const params = new URLSearchParams({
-      country_id,
-      filter_id,
-      per_page,
-      page
+    const params = new URLSearchParams({ country_id, filter_id, per_page, page });
+    return await apiRequest(`news/feed/p?${params}`, {
+      xApiAuth: "ff568a145e2d11c5d796971ac707d04772c3543607e4d789a335e9a8a08dbc80",
     });
-
-    const response = await fetch(`${API_URL}/news/feed/p?${params}`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json, text/plain, */*",
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
-        "device-uid": localStorage.getItem("device_id") || "webbrowser",
-        "language-id": String(getLanguage()),
-        "pn-token": "null",
-        "reskin": reskin,
-        "x-api-auth": "ff568a145e2d11c5d796971ac707d04772c3543607e4d789a335e9a8a08dbc80"
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    return await response.json();
   } catch (error) {
     console.error("fetchNewsFeed error:", error);
     throw error;
@@ -521,29 +299,10 @@ export async function fetchNewsFeed({
 
 export async function fetchNewsFilters({ country_id = "" } = {}) {
   try {
-    const params = new URLSearchParams({
-      country_id
+    const params = new URLSearchParams({ country_id });
+    return await apiRequest(`news/filter?${params}`, {
+      xApiAuth: "d01530851a4528f8a00f8832e9c3901436dad47a60ecd0f79f0a7742434d2ff5",
     });
-
-    const response = await fetch(`${API_URL}/news/filter?${params}`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json, text/plain, */*",
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
-        "device-uid": localStorage.getItem("device_id") || "webbrowser",
-        "language-id": String(getLanguage()),
-        "pn-token": "null",
-        "reskin": reskin,
-        "x-api-auth": "d01530851a4528f8a00f8832e9c3901436dad47a60ecd0f79f0a7742434d2ff5"
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    return await response.json();
   } catch (error) {
     console.error("fetchNewsFilters error:", error);
     throw error;
@@ -552,25 +311,9 @@ export async function fetchNewsFilters({ country_id = "" } = {}) {
 
 export async function getVideoTutorials() {
   try {
-    const response = await fetch(`${API_URL}/video-tutorials`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json, text/plain, */*",
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
-        "device-uid": localStorage.getItem("device_id") || "webbrowser",
-        "language-id": String(getLanguage()),
-        "pn-token": "null",
-        "reskin": reskin,
-        "x-api-auth": "d029a78435bc2ebfdb0f452a14e09db2bbb44655607db8d14af41d5bb7c4b791"
-      }
+    return await apiRequest("video-tutorials", {
+      xApiAuth: "d029a78435bc2ebfdb0f452a14e09db2bbb44655607db8d14af41d5bb7c4b791",
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    return await response.json();
   } catch (error) {
     console.error("getVideoTutorials error:", error);
     throw error;
@@ -579,25 +322,9 @@ export async function getVideoTutorials() {
 
 export async function getVideoTutorialCategories() {
   try {
-    const response = await fetch(`${API_URL}/video-tutorials/categories`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json, text/plain, */*",
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
-        "device-uid": localStorage.getItem("device_id") || "webbrowser",
-        "language-id": String(getLanguage()),
-        "pn-token": "null",
-        "reskin": reskin,
-        "x-api-auth": "3801e6c0a213b83ba1c38161ae6b8f624a3f5bb9f186616fdc206183e517ed7e"
-      }
+    return await apiRequest("video-tutorials/categories", {
+      xApiAuth: "3801e6c0a213b83ba1c38161ae6b8f624a3f5bb9f186616fdc206183e517ed7e",
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    return await response.json();
   } catch (error) {
     console.error("getVideoTutorialCategories error:", error);
     throw error;
@@ -606,25 +333,9 @@ export async function getVideoTutorialCategories() {
 
 export async function fetchNewsCountries() {
   try {
-    const response = await fetch(`${API_URL}/news/countries`, {
-      method: "GET",
-      headers: {
-        "Accept": "application/json, text/plain, */*",
-        "Authorization": "Bearer " + localStorage.getItem("access_token"),
-        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
-        "device-uid": localStorage.getItem("device_id") || "webbrowser",
-        "language-id": String(getLanguage()),
-        "pn-token": "null",
-        "reskin": reskin,
-        "x-api-auth": "4e65f386723731546c03afe312e1e3ef566e0214562e1679e6bd7299914beaad"
-      }
+    return await apiRequest("news/countries", {
+      xApiAuth: "4e65f386723731546c03afe312e1e3ef566e0214562e1679e6bd7299914beaad",
     });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    return await response.json();
   } catch (error) {
     console.error("fetchNewsCountries error:", error);
     throw error;
@@ -632,82 +343,25 @@ export async function fetchNewsCountries() {
 }
 
 export async function changePincode(currentPincode, newPincode) {
-  const response = await fetch(`${API_URL}/change/pincode`, {
+  return apiRequest("change/pincode", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json, text/plain, */*",
-      "Authorization": "Bearer " + localStorage.getItem("access_token"),
-      "x-api-auth": "e8cda5c773bc0e85dbee8d96c0277a6ff1ca45d1bec97b43d52e5cc1249d958f",
-      "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
-      "device-uid": localStorage.getItem("device_id") || "webbrowser",
-      "language-id": "1",
-      "reskin": reskin
-    },
-    body: JSON.stringify({
-      current_pincode: currentPincode,
-      new_pincode: newPincode
-    })
+    xApiAuth: "e8cda5c773bc0e85dbee8d96c0277a6ff1ca45d1bec97b43d52e5cc1249d958f",
+    body: JSON.stringify({ current_pincode: currentPincode, new_pincode: newPincode }),
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Error ${response.status}: ${errorText}`);
-  }
-
-  return response.json();
 }
 
 export async function lockCategory(pincode, categoryId) {
-  const response = await fetch(`${API_URL}/lock/category`, {
+  return apiRequest("lock/category", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json, text/plain, */*",
-      "Authorization": "Bearer " + localStorage.getItem("access_token"),
-      "x-api-auth": "b0a06cdcd5f01a21cad8f3639db9bb81d599570820b8953b1b48a9ecbc9c57bf",
-      "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
-      "device-uid": localStorage.getItem("device_id") || "webbrowser",
-      "language-id": "1",
-      "reskin": reskin
-    },
-    body: JSON.stringify({
-      pincode: pincode,
-      category_id: categoryId
-    })
+    xApiAuth: "b0a06cdcd5f01a21cad8f3639db9bb81d599570820b8953b1b48a9ecbc9c57bf",
+    body: JSON.stringify({ pincode: pincode, category_id: categoryId }),
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Error ${response.status}: ${errorText}`);
-  }
-
-  return response.json();
 }
 
 export async function unlockCategory(pincode, categoryId) {
-  const response = await fetch(`${API_URL}/unlock/category`, {
+  return apiRequest("unlock/category", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json, text/plain, */*",
-      "Authorization": "Bearer " + localStorage.getItem("access_token"),
-      "x-api-auth": "75fb74cd606f55802abd959d6438bebc7a4a97aac8f36676b0286173328908c",
-      "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
-      "device-uid": localStorage.getItem("device_id") || "webbrowser",
-      "language-id": "1",
-      "reskin": reskin
-    },
-    body: JSON.stringify({
-      pincode: pincode,
-      category_id: categoryId
-    })
+    xApiAuth: "75fb74cd606f55802abd959d6438bebc7a4a97aac8f36676b0286173328908c",
+    body: JSON.stringify({ pincode: pincode, category_id: categoryId }),
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Error ${response.status}: ${errorText}`);
-  }
-
-  return response.json();
 }
