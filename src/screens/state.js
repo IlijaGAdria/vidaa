@@ -128,6 +128,10 @@ const state = {
   pinError: null,
   pinCode: "",
   pinPendingCategoryId: null,
+  pinChangeStep: 0,
+  pinChangeNew: "",
+  pinTitle: null,
+  pinHint: null,
 
   // Player state
   previousFocusMode: null,   // where the user was before entering player

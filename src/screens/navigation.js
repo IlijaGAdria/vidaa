@@ -1,6 +1,6 @@
 import state from "./state.js";
 import { playChannel, switchChannel, stopPlayer, togglePause, getCurrentChannel } from "./player.js";
-import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel, getM3uChannels, getRadios, getMovies, fetchNewsFeed, fetchNewsFilters, getVideoTutorials, lockCategory, unlockCategory } from "../api.js";
+import { fetchFavorites, addFavoriteChannel, removeFavoriteChannel, getM3uChannels, getRadios, getMovies, fetchNewsFeed, fetchNewsFilters, getVideoTutorials, lockCategory, unlockCategory, changePincode } from "../api.js";
 
 // ================================================
 // DOM Helpers
@@ -951,7 +951,12 @@ function hidePinDialog() {
   if (state.pinDialog) state.pinDialog.classList.remove("visible");
   state.pinCode = "";
   state.pinPendingCategoryId = null;
+  state.pinChangeStep = 0;
+  state.pinChangeNew = "";
   updatePinDots();
+  // Reset title and hint to defaults
+  if (state.pinTitle) state.pinTitle.textContent = "PIN Code";
+  if (state.pinHint) state.pinHint.textContent = "Default PIN code is 0000";
 }
 
 function updatePinDots() {
@@ -966,6 +971,18 @@ function updatePinDots() {
   }
 }
 
+function showChangePinDialog() {
+  state.pinChangeStep = 1;
+  state.pinChangeNew = "";
+  state.pinCode = "";
+  updatePinDots();
+  if (state.pinError) state.pinError.textContent = "";
+  if (state.pinTitle) state.pinTitle.textContent = "Enter Current PIN";
+  if (state.pinHint) state.pinHint.textContent = "Enter your current PIN code";
+  if (state.pinDialog) state.pinDialog.classList.add("visible");
+  state.focusMode = "pindialog";
+}
+
 function handlePinDigit(digit) {
   if (state.pinCode.length >= 4) return;
   state.pinCode += String(digit);
@@ -973,6 +990,12 @@ function handlePinDigit(digit) {
   if (state.pinError) state.pinError.textContent = "";
 
   if (state.pinCode.length === 4) {
+    // Change PIN code flow (3 steps)
+    if (state.pinChangeStep > 0) {
+      handleChangePinStep();
+      return;
+    }
+
     var correctPin = (state.userData && state.userData.pincode) ? state.userData.pincode : "0000";
     if (state.pinCode === correctPin) {
       // Parental control lock/unlock flow
@@ -1019,6 +1042,56 @@ function handlePinDigit(digit) {
       if (state.pinError) state.pinError.textContent = "Wrong PIN code";
       state.pinCode = "";
       updatePinDots();
+    }
+  }
+}
+
+function handleChangePinStep() {
+  var correctPin = (state.userData && state.userData.pincode) ? state.userData.pincode : "0000";
+
+  if (state.pinChangeStep === 1) {
+    // Step 1: Verify current PIN
+    if (state.pinCode === correctPin) {
+      state.pinChangeStep = 2;
+      state.pinCode = "";
+      updatePinDots();
+      if (state.pinTitle) state.pinTitle.textContent = "Enter New PIN";
+      if (state.pinHint) state.pinHint.textContent = "Enter your new 4-digit PIN code";
+    } else {
+      if (state.pinError) state.pinError.textContent = "Wrong PIN code";
+      state.pinCode = "";
+      updatePinDots();
+    }
+  } else if (state.pinChangeStep === 2) {
+    // Step 2: Store new PIN, ask for confirmation
+    state.pinChangeNew = state.pinCode;
+    state.pinChangeStep = 3;
+    state.pinCode = "";
+    updatePinDots();
+    if (state.pinTitle) state.pinTitle.textContent = "Confirm New PIN";
+    if (state.pinHint) state.pinHint.textContent = "Re-enter your new PIN code";
+  } else if (state.pinChangeStep === 3) {
+    // Step 3: Confirm match and call API
+    if (state.pinCode === state.pinChangeNew) {
+      var currentPin = correctPin;
+      var newPin = state.pinCode;
+      hidePinDialog();
+      state.focusMode = "settingssubmenu";
+      changePincode(currentPin, newPin).then(function() {
+        if (state.userData) state.userData.pincode = newPin;
+        console.log("[Settings] PIN code changed successfully");
+      }).catch(function(err) {
+        console.error("[Settings] Failed to change PIN code:", err);
+      });
+    } else {
+      if (state.pinError) state.pinError.textContent = "PINs do not match";
+      // Go back to step 2
+      state.pinChangeStep = 2;
+      state.pinChangeNew = "";
+      state.pinCode = "";
+      updatePinDots();
+      if (state.pinTitle) state.pinTitle.textContent = "Enter New PIN";
+      if (state.pinHint) state.pinHint.textContent = "Enter your new 4-digit PIN code";
     }
   }
 }
@@ -2144,6 +2217,10 @@ function handleEnter() {
     } else if (settItem && settItem.id === "settings-parental") {
       hideAccountPanel();
       showParentalPanel();
+    } else if (settItem && settItem.id === "settings-changepin") {
+      hideAccountPanel();
+      hideParentalPanel();
+      showChangePinDialog();
     }
     return;
   }
@@ -2561,10 +2638,13 @@ function handleSearchKeyPress(e) {
 
 function handleBack() {
   if (state.focusMode === "pindialog") {
+    var wasChangePin = state.pinChangeStep > 0;
     hidePinDialog();
     state.pinPendingAction = null;
     // Return to correct context
-    if (state.pinPendingCategoryId !== null) {
+    if (wasChangePin) {
+      state.focusMode = "settingssubmenu";
+    } else if (state.pinPendingCategoryId !== null) {
       state.focusMode = "submenu";
     } else {
       state.focusMode = "parentalcontrol";

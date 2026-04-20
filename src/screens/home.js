@@ -163,8 +163,12 @@ class HomeScreen {
       document.getElementById("pin-dot-3")
     ];
     state.pinError = document.getElementById("pin-error");
+    state.pinTitle = document.getElementById("pin-title");
+    state.pinHint = document.getElementById("pin-hint");
     state.pinCode = "";
     state.pinPendingCategoryId = null;
+    state.pinChangeStep = 0;
+    state.pinChangeNew = "";
 
     // Load news countries
     fetchNewsCountries().then(function(countries) {
