@@ -19,6 +19,8 @@ var VirtualKeyboard = (function () {
     onLogin: null,
     onRegister: null,
     onBackToLogin: null,
+    onShowLanguages: null,
+    onHideLanguages: null,
   };
 
   // Keyboard layouts
@@ -305,6 +307,31 @@ var VirtualKeyboard = (function () {
 
   function handleFormNav(e) {
     var code = e.keyCode || e.which;
+
+    // Language selection mode
+    if (state.currentScreen === "language") {
+      switch (code) {
+        case 38: case 29460: // Up
+          e.preventDefault();
+          if (state.loginScreen) state.loginScreen.moveLanguageFocus(-1);
+          break;
+        case 40: case 29461: // Down
+          e.preventDefault();
+          if (state.loginScreen) state.loginScreen.moveLanguageFocus(1);
+          break;
+        case 13: case 29443: // Enter
+          e.preventDefault();
+          if (state.loginScreen) state.loginScreen.selectLanguage();
+          break;
+        case 27: case 8: case 10009: case 461: case 29444: // Back
+          e.preventDefault();
+          state.currentScreen = "login";
+          if (state.onHideLanguages) state.onHideLanguages();
+          break;
+      }
+      return;
+    }
+
     switch (code) {
       case 38: // Up
       case 29460: // VK_UP
@@ -345,8 +372,14 @@ var VirtualKeyboard = (function () {
       case 461: // LG webOS Back
       case 29444: // VK_BACK
         e.preventDefault();
-        if (state.currentScreen === "registration" && state.onBackToLogin) {
+        if (state.currentScreen === "language") {
+          state.currentScreen = "login";
+          if (state.onHideLanguages) state.onHideLanguages();
+        } else if (state.currentScreen === "registration" && state.onBackToLogin) {
           state.onBackToLogin();
+        } else if (state.currentScreen === "login" && state.onShowLanguages) {
+          state.currentScreen = "language";
+          state.onShowLanguages();
         }
         break;
     }
@@ -428,6 +461,9 @@ var VirtualKeyboard = (function () {
     state.onLogin = options.onLogin || null;
     state.onRegister = options.onRegister || null;
     state.onBackToLogin = options.onBackToLogin || null;
+    state.onShowLanguages = options.onShowLanguages || null;
+    state.onHideLanguages = options.onHideLanguages || null;
+    state.loginScreen = options.loginScreen || null;
 
     injectStyles();
     state.keyboardMode = "full";

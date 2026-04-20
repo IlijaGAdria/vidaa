@@ -1344,3 +1344,92 @@
   color: #ff4444;
   min-height: 1.2vw;
 }
+
+/* Contact Panel */
+.contact-panel {
+  position: fixed;
+  top: 12vh;
+  left: 26vw;
+  width: 60vw;
+  max-height: 78vh;
+  display: none;
+  flex-direction: column;
+  color: white;
+  overflow: hidden;
+  z-index: 50;
+}
+
+.contact-panel.visible {
+  display: flex;
+}
+
+.contact-panel-title {
+  font-size: 2.2vw;
+  font-weight: 700;
+  margin-bottom: 1.5vw;
+  color: #00b9be;
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+}
+
+.contact-panel-title i {
+  font-size: 2vw;
+}
+
+.contact-panel-text {
+  font-size: 1.1vw;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 2vw;
+  line-height: 1.6;
+}
+
+.contact-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3vw;
+}
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  padding: 1.2vw 1.5vw;
+  border-radius: 0.5vw;
+  background: rgba(255,255,255,0.05);
+  gap: 1.5vw;
+}
+
+.contact-row-icon {
+  width: 2.5vw;
+  text-align: center;
+  font-size: 1.3vw;
+  color: #00b9be;
+  flex-shrink: 0;
+}
+
+.contact-row-flag {
+  width: 2.5vw;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.contact-flag-img {
+  width: 2.2vw;
+  height: auto;
+  border-radius: 0.2vw;
+  vertical-align: middle;
+}
+
+.contact-row-label {
+  font-size: 1.1vw;
+  color: rgba(255,255,255,0.5);
+  min-width: 14vw;
+  flex-shrink: 0;
+}
+
+.contact-row-value {
+  font-size: 1.3vw;
+  font-weight: 600;
+  color: #fff;
+  flex: 1;
+}

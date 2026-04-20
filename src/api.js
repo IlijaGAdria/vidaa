@@ -165,17 +165,31 @@ export async function fetchFavorites() {
 // Prints customer centar section inside login page
 export async function getInfo() {
   try {
-    return await apiRequest("info?language_id=undefined", {
+    var langId = getLanguage();
+    return await apiRequest("info?language_id=" + langId, {
       headers: {
         "Accept": "application/json, text/plain, */*",
         "Content-Type": "application/json",
         "Authorization": "Bearer null",
         "device-mac": "a1:b2:c3:d4:e5",
         "device-uid": "webbrowser",
-        "language-id": "null",
+        "language-id": String(langId),
         "pn-token": "null",
         "reskin": reskin,
         "x-api-auth": "2124584bd2314798d3e0bdc34b0764b20c6bea94b539f34f11f2ee9fc3c0dc3e"
+      },
+    });
+  } catch (error) {
+    console.error("Fetch error:", error);
+  }
+}
+
+export async function getLanguages() {
+  try {
+    return await apiRequest("languages", {
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "reskin": reskin,
       },
     });
   } catch (error) {

@@ -52,7 +52,7 @@ var uiElements = [
 var stateKeys = [
   "subMenu", "radioSubMenu", "favSubMenu", "moviesSubMenu",
   "tutorialSubMenu", "tutorialList", "settingsSubMenu",
-  "accountPanel", "parentalPanel", "countrySubMenu",
+  "accountPanel", "parentalPanel", "contactPanel", "countrySubMenu",
   "channelList", "radioPanel", "newsSection",
   "newsCountryList", "newsFilterList",
 ];

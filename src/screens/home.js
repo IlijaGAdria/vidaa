@@ -1,8 +1,99 @@
-import { getChannels, getInternetChannelFilters, getMovies, getUser, fetchNewsCountries, fetchNewsFeed, getVideoTutorialCategories, getVideoTutorials } from "../api.js";
+import { getChannels, getInternetChannelFilters, getMovies, getUser, fetchNewsCountries, fetchNewsFeed, getVideoTutorialCategories, getVideoTutorials, getInfo, getLanguages } from "../api.js";
 import Remote from "../remote.js";
 import { fetchWeather } from "../weather_api.js";
+import { getLanguage } from "../language.js";
 import state from "./state.js";
 import { handler, loadInternetCountries, loadMovieCategories, loadNewsCountries, loadVideoTutorialCategories } from "./navigation.js";
+
+function applyHomeTranslations() {
+  var currentLangId = parseInt(getLanguage(), 10);
+  var langObj = null;
+  for (var i = 0; i < state.homeLanguages.length; i++) {
+    if (state.homeLanguages[i].id === currentLangId) {
+      langObj = state.homeLanguages[i];
+      break;
+    }
+  }
+  if (!langObj) return;
+
+  var menu = langObj.menu || {};
+  var settings = langObj.settings || {};
+  var home = langObj.home || {};
+  var search = langObj.search || {};
+  var player = langObj.player || {};
+  var favorites = langObj.favorites || {};
+  var news = langObj.news || {};
+  var filters = langObj.filters || {};
+  var radio = filters.radio || {};
+
+  function setText(id, text) {
+    var el = document.getElementById(id);
+    if (el && text) el.textContent = text;
+  }
+
+  // Main menu items
+  setText("t-menu-home", menu.home);
+  setText("t-menu-tv", menu.tv_channels);
+  setText("t-menu-radio", menu.radio);
+  setText("t-menu-favorites", menu.favorites);
+  setText("t-menu-movies", menu.movies);
+  setText("t-menu-tv-shows", menu.tv_shows);
+  setText("t-menu-news", menu.news);
+  setText("t-menu-search", menu.search);
+  setText("t-menu-tutorials", menu.video_tutorials);
+  setText("t-menu-settings", menu.settings);
+
+  // Now On TV section
+  setText("t-now-on-tv", home.now_on_tv_slider ? home.now_on_tv_slider.title : null);
+
+  // Player overlay
+  var emitterEl = document.getElementById("t-emitter");
+  if (emitterEl && player.emiter_label) emitterEl.textContent = player.emiter_label + ":";
+  setText("t-add-favorite", favorites.btn);
+
+  // Radio sub-menu
+  setText("t-radio-all", radio.all);
+  setText("t-radio-favorites", radio.favorites);
+
+  // Favorites sub-menu
+  var favSub = favorites.submenu || {};
+  setText("t-fav-tv", favSub.tv_channels);
+  setText("t-fav-radio", favSub.radio_stations);
+
+  // Settings sub-menu
+  var settingsSub = settings.submenu || {};
+  setText("t-settings-account", settingsSub.account);
+  setText("t-settings-parental", settingsSub.parental);
+  setText("t-settings-changepin", settingsSub.change_pin);
+  setText("t-settings-contact", settingsSub.contact);
+
+  // Panel titles
+  setText("t-account-title", settingsSub.account);
+  setText("t-parental-title", settingsSub.parental);
+  setText("t-contact-title", settingsSub.contact);
+
+  // Contact panel text
+  var contactDesc = settings.contact ? settings.contact.description : null;
+  setText("contact-panel-text", contactDesc);
+
+  // Search placeholder
+  var searchEl = document.getElementById("search-text");
+  if (searchEl && search.placeholder) searchEl.textContent = search.placeholder;
+
+  // News dropdowns
+  setText("t-news-country", news.country_filter_label);
+  setText("t-news-filter", news.news_filter_label);
+
+  // PIN dialog
+  var parental = settings.parental || {};
+  setText("pin-title", parental.pin_title);
+  setText("pin-hint", parental.pin_hint);
+
+  // Radio panel
+  setText("t-radio-now-playing", player.radio_player_text);
+  setText("t-radio-stop", player.stop_btn);
+  setText("t-radio-fav", favorites.btn);
+}
 
 // Format EPG datetime string to HH:MM
 function formatEpgTime(datetimeStr) {
@@ -132,6 +223,11 @@ class HomeScreen {
     state.parentalPanel = document.getElementById("parental-panel");
     state.parentalRows = document.getElementById("parental-rows");
 
+    // Setup contact panel
+    state.contactPanel = document.getElementById("contact-panel");
+    state.contactRows = document.getElementById("contact-rows");
+    state.contactPanelText = document.getElementById("contact-panel-text");
+
     // Setup news section
     state.newsSection = document.getElementById("news-section");
     state.newsGrid = document.getElementById("news-grid");
@@ -237,6 +333,23 @@ class HomeScreen {
     } catch (err) {
       console.error("Failed to load user data:", err);
     }
+
+    // Load contact info
+    getInfo().then(function(data) {
+      state.infoData = data || {};
+    }).catch(function(err) {
+      console.error("Failed to load info data:", err);
+    });
+
+    // Fetch languages and apply translations
+    getLanguages().then(function(data) {
+      if (data && data.languages) {
+        state.homeLanguages = data.languages;
+        applyHomeTranslations();
+      }
+    }).catch(function(err) {
+      console.error("Failed to load languages:", err);
+    });
 
     // Setup radio now-playing panel
     state.radioPanel = document.getElementById("radio-panel");

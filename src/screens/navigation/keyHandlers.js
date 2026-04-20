@@ -68,7 +68,7 @@ import {
   isCategoryLocked, showPinDialog, hidePinDialog, showChangePinDialog,
   handlePinDigit, handlePinBackspace, showParentalPanel, hideParentalPanel,
   moveParentalFocus, toggleParentalLock, showAccountPanel, hideAccountPanel,
-  populateParentalPanel,
+  populateParentalPanel, showContactPanel, hideContactPanel,
 } from "./settingsPanel.js";
 
 // ================================================
@@ -316,14 +316,21 @@ function handleEnter() {
     var settItem = state.settingsSubItems[state.settingsSubIndex];
     if (settItem && settItem.id === "settings-account") {
       hideParentalPanel();
+      hideContactPanel();
       showAccountPanel();
     } else if (settItem && settItem.id === "settings-parental") {
       hideAccountPanel();
+      hideContactPanel();
       showParentalPanel();
     } else if (settItem && settItem.id === "settings-changepin") {
       hideAccountPanel();
       hideParentalPanel();
+      hideContactPanel();
       showChangePinDialog();
+    } else if (settItem && settItem.id === "settings-contact") {
+      hideAccountPanel();
+      hideParentalPanel();
+      showContactPanel();
     }
     return;
   }
@@ -518,7 +525,7 @@ function handleLeft() {
   else if (fm === FOCUS.MOVIES_SUBMENU) { hideMoviesSubMenu(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }
   else if (fm === FOCUS.TUTORIAL_SUBMENU) { hideTutorialSubMenu(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }
   else if (fm === FOCUS.TUTORIAL_LIST) { hideTutorialList(); state.focusMode = FOCUS.TUTORIAL_SUBMENU; }
-  else if (fm === FOCUS.SETTINGS_SUBMENU) { hideSettingsSubMenu(); hideAccountPanel(); hideParentalPanel(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }
+  else if (fm === FOCUS.SETTINGS_SUBMENU) { hideSettingsSubMenu(); hideAccountPanel(); hideParentalPanel(); hideContactPanel(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }
   else if (fm === FOCUS.PARENTAL_CONTROL) { hideParentalPanel(); state.focusMode = FOCUS.SETTINGS_SUBMENU; }
   else if (fm === FOCUS.RADIO_SUBMENU) { hideRadioSubMenu(); if (state.radioPlaying) stopRadio(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }
   else if (fm === FOCUS.SUBMENU) { hideSubMenu(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }
@@ -625,7 +632,7 @@ function handleBack() {
   else if (fm === FOCUS.MOVIES_SUBMENU) { hideMoviesSubMenu(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }
   else if (fm === FOCUS.TUTORIAL_SUBMENU) { hideTutorialSubMenu(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }
   else if (fm === FOCUS.TUTORIAL_LIST) { hideTutorialList(); state.focusMode = FOCUS.TUTORIAL_SUBMENU; }
-  else if (fm === FOCUS.SETTINGS_SUBMENU) { hideSettingsSubMenu(); hideAccountPanel(); hideParentalPanel(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }
+  else if (fm === FOCUS.SETTINGS_SUBMENU) { hideSettingsSubMenu(); hideAccountPanel(); hideParentalPanel(); hideContactPanel(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }
   else if (fm === FOCUS.PARENTAL_CONTROL) { hideParentalPanel(); state.focusMode = FOCUS.SETTINGS_SUBMENU; }
   else if (fm === FOCUS.RADIO_SUBMENU) { hideRadioSubMenu(); if (state.radioPlaying) stopRadio(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }
   else if (fm === FOCUS.SUBMENU) { hideSubMenu(); expandMenu(); showChannelsSection(); state.focusMode = FOCUS.MENU; }

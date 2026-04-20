@@ -3,6 +3,16 @@ import { lockCategory, unlockCategory, changePincode } from "../../api.js";
 import { parentalCategories } from "./constants.js";
 import { moveFocus } from "./focusUtils.js";
 import { PARENTAL_SCROLL_OFFSET } from "./constants.js";
+import { getLanguage } from "../../language.js";
+
+function getTranslations() {
+  if (!state.homeLanguages || !state.homeLanguages.length) return {};
+  var currentLangId = parseInt(getLanguage(), 10);
+  for (var i = 0; i < state.homeLanguages.length; i++) {
+    if (state.homeLanguages[i].id === currentLangId) return state.homeLanguages[i];
+  }
+  return {};
+}
 
 // ================================================
 // PIN Code Dialog
@@ -32,8 +42,9 @@ export function hidePinDialog() {
   state.pinChangeStep = 0;
   state.pinChangeNew = "";
   updatePinDots();
-  if (state.pinTitle) state.pinTitle.textContent = "PIN Code";
-  if (state.pinHint) state.pinHint.textContent = "Default PIN code is 0000";
+  var t = (getTranslations().settings || {}).parental || {};
+  if (state.pinTitle) state.pinTitle.textContent = t.pin_title || "PIN Code";
+  if (state.pinHint) state.pinHint.textContent = t.pin_hint || "Default PIN code is 0000";
 }
 
 function updatePinDots() {
@@ -54,8 +65,9 @@ export function showChangePinDialog() {
   state.pinCode = "";
   updatePinDots();
   if (state.pinError) state.pinError.textContent = "";
-  if (state.pinTitle) state.pinTitle.textContent = "Enter Current PIN";
-  if (state.pinHint) state.pinHint.textContent = "Enter your current PIN code";
+  var t = (getTranslations().settings || {}).parental || {};
+  if (state.pinTitle) state.pinTitle.textContent = t.enter_current_pin || "Enter Current PIN";
+  if (state.pinHint) state.pinHint.textContent = t.enter_current_pin_hint || "Enter your current PIN code";
   if (state.pinDialog) state.pinDialog.classList.add("visible");
   state.focusMode = "pindialog";
 }
@@ -122,7 +134,8 @@ export function handlePinDigit(digit) {
         state.focusMode = "channellist";
       }
     } else {
-      if (state.pinError) state.pinError.textContent = "Wrong PIN code";
+      var t = (getTranslations().settings || {}).parental || {};
+      if (state.pinError) state.pinError.textContent = t.wrong_pin || "Wrong PIN code";
       state.pinCode = "";
       updatePinDots();
     }
@@ -132,16 +145,17 @@ export function handlePinDigit(digit) {
 function handleChangePinStep() {
   var correctPin =
     state.userData && state.userData.pincode ? state.userData.pincode : "0000";
+  var t = (getTranslations().settings || {}).parental || {};
 
   if (state.pinChangeStep === 1) {
     if (state.pinCode === correctPin) {
       state.pinChangeStep = 2;
       state.pinCode = "";
       updatePinDots();
-      if (state.pinTitle) state.pinTitle.textContent = "Enter New PIN";
-      if (state.pinHint) state.pinHint.textContent = "Enter your new 4-digit PIN code";
+      if (state.pinTitle) state.pinTitle.textContent = t.enter_new_pin || "Enter New PIN";
+      if (state.pinHint) state.pinHint.textContent = t.enter_new_pin_hint || "Enter your new 4-digit PIN code";
     } else {
-      if (state.pinError) state.pinError.textContent = "Wrong PIN code";
+      if (state.pinError) state.pinError.textContent = t.wrong_pin || "Wrong PIN code";
       state.pinCode = "";
       updatePinDots();
     }
@@ -150,8 +164,8 @@ function handleChangePinStep() {
     state.pinChangeStep = 3;
     state.pinCode = "";
     updatePinDots();
-    if (state.pinTitle) state.pinTitle.textContent = "Confirm New PIN";
-    if (state.pinHint) state.pinHint.textContent = "Re-enter your new PIN code";
+    if (state.pinTitle) state.pinTitle.textContent = t.confirm_new_pin || "Confirm New PIN";
+    if (state.pinHint) state.pinHint.textContent = t.confirm_new_pin_hint || "Re-enter your new PIN code";
   } else if (state.pinChangeStep === 3) {
     if (state.pinCode === state.pinChangeNew) {
       var currentPin = correctPin;
@@ -167,13 +181,13 @@ function handleChangePinStep() {
           console.error("[Settings] Failed to change PIN code:", err);
         });
     } else {
-      if (state.pinError) state.pinError.textContent = "PINs do not match";
+      if (state.pinError) state.pinError.textContent = t.pins_no_match || "PINs do not match";
       state.pinChangeStep = 2;
       state.pinChangeNew = "";
       state.pinCode = "";
       updatePinDots();
-      if (state.pinTitle) state.pinTitle.textContent = "Enter New PIN";
-      if (state.pinHint) state.pinHint.textContent = "Enter your new 4-digit PIN code";
+      if (state.pinTitle) state.pinTitle.textContent = t.enter_new_pin || "Enter New PIN";
+      if (state.pinHint) state.pinHint.textContent = t.enter_new_pin_hint || "Enter your new 4-digit PIN code";
     }
   }
 }
@@ -225,6 +239,7 @@ export function populateParentalPanel() {
     state.userData && Array.isArray(state.userData.locked_categories)
       ? state.userData.locked_categories
       : [];
+  var t = (getTranslations().settings || {}).parental || {};
   parentalCategories.forEach(function (cat) {
     var isLocked = lockedCats.indexOf(cat.id) !== -1;
     var row = document.createElement("div");
@@ -236,7 +251,7 @@ export function populateParentalPanel() {
       '<div class="parental-row-name">' + cat.name + "</div>" +
       '<div class="parental-row-status ' + (isLocked ? "locked" : "unlocked") + '">' +
         '<i class="fa-solid ' + (isLocked ? "fa-lock" : "fa-lock-open") + '"></i> ' +
-        (isLocked ? "Locked" : "Unlocked") +
+        (isLocked ? (t.locked || "Locked") : (t.unlocked || "Unlocked")) +
       "</div>";
     state.parentalRows.appendChild(row);
   });
@@ -304,15 +319,19 @@ export function populateAccountPanel() {
   }
   var u = state.userData || {};
   var mac = localStorage.getItem("device_mac") || "N/A";
+
+  // Get translated labels if available
+  var labels = (getTranslations().settings || {}).account || {};
+
   var fields = [
-    { icon: "fa-user", label: "Username", value: u.username || "N/A" },
-    { icon: "fa-envelope", label: "Email", value: u.email || "N/A" },
-    { icon: "fa-box", label: "Package Name", value: u.package_name || "N/A" },
-    { icon: "fa-calendar", label: "Expire Date", value: u.expire_date || "N/A" },
-    { icon: "fa-display", label: "Used Devices", value: u.max_connections_kozmetika || "N/A" },
-    { icon: "fa-code", label: "Software Version", value: "1.0.0" },
-    { icon: "fa-tv", label: "Device Version", value: "N/A" },
-    { icon: "fa-network-wired", label: "MAC Address", value: mac },
+    { icon: "fa-user", label: labels.username || "Username", value: u.username || "N/A" },
+    { icon: "fa-envelope", label: labels.email || "Email", value: u.email || "N/A" },
+    { icon: "fa-box", label: labels.package_name || "Package Name", value: u.package_name || "N/A" },
+    { icon: "fa-calendar", label: labels.expire_date || "Expire Date", value: u.expire_date || "N/A" },
+    { icon: "fa-display", label: labels.used_devices || "Used Devices", value: u.max_connections_kozmetika || "N/A" },
+    { icon: "fa-code", label: labels.software_version || "Software Version", value: "1.0.0" },
+    { icon: "fa-tv", label: labels.device_version || "Device Version", value: "N/A" },
+    { icon: "fa-network-wired", label: labels.mac_address || "MAC Address", value: mac },
   ];
   fields.forEach(function (f) {
     var row = document.createElement("div");
@@ -323,4 +342,69 @@ export function populateAccountPanel() {
       '<div class="account-row-value">' + f.value + "</div>";
     state.accountRows.appendChild(row);
   });
+}
+
+// ================================================
+// Contact Panel
+// ================================================
+
+export function showContactPanel() {
+  if (!state.contactPanel) return;
+  populateContactPanel();
+  state.contactPanel.classList.add("visible");
+}
+
+export function hideContactPanel() {
+  if (state.contactPanel) state.contactPanel.classList.remove("visible");
+}
+
+function populateContactPanel() {
+  while (state.contactRows.firstChild) {
+    state.contactRows.removeChild(state.contactRows.firstChild);
+  }
+  var info = state.infoData || {};
+
+  if (state.contactPanelText && info.text_message) {
+    state.contactPanelText.textContent = info.text_message;
+  }
+
+  if (info.website) {
+    var webRow = document.createElement("div");
+    webRow.className = "contact-row";
+    webRow.innerHTML =
+      '<div class="contact-row-icon"><i class="fa-solid fa-globe"></i></div>' +
+      '<div class="contact-row-label">Website</div>' +
+      '<div class="contact-row-value">' + escapeHtml(info.website) + '</div>';
+    state.contactRows.appendChild(webRow);
+  }
+
+  if (info.email) {
+    var emailRow = document.createElement("div");
+    emailRow.className = "contact-row";
+    emailRow.innerHTML =
+      '<div class="contact-row-icon"><i class="fa-solid fa-envelope"></i></div>' +
+      '<div class="contact-row-label">Email</div>' +
+      '<div class="contact-row-value">' + escapeHtml(info.email) + '</div>';
+    state.contactRows.appendChild(emailRow);
+  }
+
+  var phones = info.call_center_phones || [];
+  phones.forEach(function(entry) {
+    var flagUrl = entry.country && entry.country.flag ? entry.country.flag : "";
+    var countryName = entry.country && entry.country.name ? entry.country.name : "";
+    var flagHtml = flagUrl ? '<img src="' + escapeHtml(flagUrl) + '" alt="' + escapeHtml(countryName) + '" class="contact-flag-img">' : '';
+    var row = document.createElement("div");
+    row.className = "contact-row";
+    row.innerHTML =
+      '<div class="contact-row-flag">' + flagHtml + '</div>' +
+      '<div class="contact-row-label">' + escapeHtml(countryName) + '</div>' +
+      '<div class="contact-row-value">' + escapeHtml(entry.phone_number || "") + '</div>';
+    state.contactRows.appendChild(row);
+  });
+}
+
+function escapeHtml(str) {
+  var div = document.createElement("div");
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
 }

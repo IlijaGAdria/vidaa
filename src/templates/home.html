@@ -14,7 +14,7 @@
       </div>
       <div class="po-info-right">
         <div class="po-emitter">
-          <span>Emitter:</span>
+          <span id="t-emitter">Emitter:</span>
           <span class="po-emitter-icon"><i class="fa-solid fa-globe"></i></span>
         </div>
         <span class="po-source" id="po-source">SOURCE</span>
@@ -38,7 +38,7 @@
         <button class="po-btn" id="po-forward"><i class="fa-solid fa-rotate-right"></i></button>
       </div>
       <div class="po-controls-right">
-        <div class="po-action" id="po-favorite"><i class="fa-regular fa-heart"></i> Add to Favorites</div>
+        <div class="po-action" id="po-favorite"><i class="fa-regular fa-heart"></i> <span id="t-add-favorite">Add to Favorites</span></div>
       </div>
     </div>
   </div>
@@ -49,7 +49,7 @@
 
 
   <div class="channels-section">
-    <h2>Now On TV</h2>
+    <h2 id="t-now-on-tv">Now On TV</h2>
     <div class="channels-grid" id="channels-grid">
     </div>
   </div>
@@ -81,16 +81,16 @@
 
 <!-- Scroll Menu -->
 <div class="vertical-scroll" id="menu"> 
-  <div class="item active" id="menu-home" tabindex="0"> <i class="fa-solid fa-house"></i>Home</div>
-  <div class="item" id="menu-tv-channels" tabindex="-1"> <i class="fa-solid fa-tv"></i>TV Channels</div>
-  <div class="item" id="menu-radio" tabindex="-1"> <i class="fa-solid fa-radio"></i>Radio Stations</div>
-  <div class="item" id="menu-favorites" tabindex="-1"> <i class="fa-solid fa-heart-circle-plus"></i>Favorites</div>
-  <div class="item" id="menu-movies" tabindex="-1"> <i class="fa-solid fa-film"></i>Movies</div>
-  <div class="item" id="menu-tv-shows" tabindex="-1"> <i class="fa-solid fa-clapperboard"></i>TV Shows</div>
-  <div class="item" id="menu-news" tabindex="-1"> <i class="fa-solid fa-newspaper"></i>News</div>
-  <div class="item" id="menu-search" tabindex="-1"> <i class="fa-solid fa-magnifying-glass"></i>Search</div>
-  <div class="item" id="menu-video-tutorials" tabindex="-1"> <i class="fa-solid fa-video"></i>Video Tutorials</div>
-  <div class="item" id="menu-settings" tabindex="-1"> <i class="fa-solid fa-cog"></i>Settings</div>
+  <div class="item active" id="menu-home" tabindex="0"> <i class="fa-solid fa-house"></i><span id="t-menu-home">Home</span></div>
+  <div class="item" id="menu-tv-channels" tabindex="-1"> <i class="fa-solid fa-tv"></i><span id="t-menu-tv">TV Channels</span></div>
+  <div class="item" id="menu-radio" tabindex="-1"> <i class="fa-solid fa-radio"></i><span id="t-menu-radio">Radio Stations</span></div>
+  <div class="item" id="menu-favorites" tabindex="-1"> <i class="fa-solid fa-heart-circle-plus"></i><span id="t-menu-favorites">Favorites</span></div>
+  <div class="item" id="menu-movies" tabindex="-1"> <i class="fa-solid fa-film"></i><span id="t-menu-movies">Movies</span></div>
+  <div class="item" id="menu-tv-shows" tabindex="-1"> <i class="fa-solid fa-clapperboard"></i><span id="t-menu-tv-shows">TV Shows</span></div>
+  <div class="item" id="menu-news" tabindex="-1"> <i class="fa-solid fa-newspaper"></i><span id="t-menu-news">News</span></div>
+  <div class="item" id="menu-search" tabindex="-1"> <i class="fa-solid fa-magnifying-glass"></i><span id="t-menu-search">Search</span></div>
+  <div class="item" id="menu-video-tutorials" tabindex="-1"> <i class="fa-solid fa-video"></i><span id="t-menu-tutorials">Video Tutorials</span></div>
+  <div class="item" id="menu-settings" tabindex="-1"> <i class="fa-solid fa-cog"></i><span id="t-menu-settings">Settings</span></div>
 </div>
 
 <!-- Sub Menu -->
@@ -123,14 +123,14 @@
 
 <!-- Radio Sub Menu -->
 <div class="sub-menu" id="radio-sub-menu">
-  <div class="sub-item active" id="radio-all" tabindex="0"><span class="sub-icon">///</span>All</div>
-  <div class="sub-item" id="radio-favorites" tabindex="-1"><span class="sub-icon"><i class="fa-solid fa-heart-circle-plus"></i></span>Favorites</div>
+  <div class="sub-item active" id="radio-all" tabindex="0"><span class="sub-icon">///</span><span id="t-radio-all">All</span></div>
+  <div class="sub-item" id="radio-favorites" tabindex="-1"><span class="sub-icon"><i class="fa-solid fa-heart-circle-plus"></i></span><span id="t-radio-favorites">Favorites</span></div>
 </div>
 
 <!-- Favorites Sub Menu -->
 <div class="sub-menu" id="favorites-sub-menu">
-  <div class="sub-item active" id="fav-tv-channels" tabindex="0"><span class="sub-icon"><i class="fa-solid fa-tv"></i></span>TV Channels</div>
-  <div class="sub-item" id="fav-radio-stations" tabindex="-1"><span class="sub-icon"><i class="fa-solid fa-radio"></i></span>Radio Stations</div>
+  <div class="sub-item active" id="fav-tv-channels" tabindex="0"><span class="sub-icon"><i class="fa-solid fa-tv"></i></span><span id="t-fav-tv">TV Channels</span></div>
+  <div class="sub-item" id="fav-radio-stations" tabindex="-1"><span class="sub-icon"><i class="fa-solid fa-radio"></i></span><span id="t-fav-radio">Radio Stations</span></div>
 </div>
 
 <!-- Movies Sub Menu -->
@@ -147,23 +147,31 @@
 
 <!-- Settings Sub Menu -->
 <div class="sub-menu" id="settings-sub-menu">
-  <div class="sub-item active" id="settings-account" tabindex="0"><span class="sub-icon"><i class="fa-solid fa-user"></i></span>Account</div>
-  <div class="sub-item" id="settings-parental" tabindex="-1"><span class="sub-icon"><i class="fa-solid fa-shield-halved"></i></span>Parental Control</div>
-  <div class="sub-item" id="settings-changepin" tabindex="-1"><span class="sub-icon"><i class="fa-solid fa-key"></i></span>Change PIN Code</div>
+  <div class="sub-item active" id="settings-account" tabindex="0"><span class="sub-icon"><i class="fa-solid fa-user"></i></span><span id="t-settings-account">Account</span></div>
+  <div class="sub-item" id="settings-parental" tabindex="-1"><span class="sub-icon"><i class="fa-solid fa-shield-halved"></i></span><span id="t-settings-parental">Parental Control</span></div>
+  <div class="sub-item" id="settings-changepin" tabindex="-1"><span class="sub-icon"><i class="fa-solid fa-key"></i></span><span id="t-settings-changepin">Change PIN Code</span></div>
+  <div class="sub-item" id="settings-contact" tabindex="-1"><span class="sub-icon"><i class="fa-solid fa-headset"></i></span><span id="t-settings-contact">Contact</span></div>
 </div>
 
 <!-- Account Info Panel -->
 <div class="account-panel" id="account-panel">
-  <div class="account-panel-title"><i class="fa-solid fa-circle-user"></i> Account Info</div>
+  <div class="account-panel-title"><i class="fa-solid fa-circle-user"></i> <span id="t-account-title">Account Info</span></div>
   <div class="account-rows" id="account-rows"></div>
 </div>
 
 <!-- Parental Control Panel -->
 <div class="parental-panel" id="parental-panel">
-  <div class="parental-panel-title"><i class="fa-solid fa-shield-halved"></i> Parental Control</div>
+  <div class="parental-panel-title"><i class="fa-solid fa-shield-halved"></i> <span id="t-parental-title">Parental Control</span></div>
   <div class="parental-rows-wrapper">
     <div class="parental-rows" id="parental-rows"></div>
   </div>
+</div>
+
+<!-- Contact Panel -->
+<div class="contact-panel" id="contact-panel">
+  <div class="contact-panel-title"><i class="fa-solid fa-headset"></i> <span id="t-contact-title">Contact</span></div>
+  <div class="contact-panel-text" id="contact-panel-text">If you have any questions, or need help with using Adria Telekom, feel free to reach out us and we'll get back to you as soon as possible.</div>
+  <div class="contact-rows" id="contact-rows"></div>
 </div>
 
 <!-- Search Section -->
@@ -171,7 +179,7 @@
   <div class="search-input-bar">
     <div class="search-input-box" id="search-input-box">
       <i class="fa-solid fa-magnifying-glass"></i>
-      <span class="search-text placeholder" id="search-text">Search TV channels...</span>
+      <span class="search-text placeholder" id="search-text" data-t-id="t-search-placeholder">Search TV channels...</span>
       <span class="search-cursor"></span>
     </div>
   </div>
@@ -184,11 +192,11 @@
 <div class="news-section" id="news-section">
   <div class="news-top-bar">
     <div class="news-dropdown" id="news-country-btn">
-      <span>Select Country</span>
+      <span id="t-news-country">Select Country</span>
       <i class="fa-solid fa-chevron-down"></i>
     </div>
     <div class="news-dropdown" id="news-filter-btn">
-      <span>Select Newspaper</span>
+      <span id="t-news-filter">Select Newspaper</span>
       <i class="fa-solid fa-chevron-down"></i>
     </div>
   </div>
@@ -247,7 +255,7 @@
       <i class="fa-solid fa-radio"></i>
     </div>
     <div class="radio-panel-info">
-      <span class="radio-panel-label">Now Playing</span>
+      <span class="radio-panel-label" id="t-radio-now-playing">Now Playing</span>
       <span class="radio-panel-name" id="radio-panel-name">—</span>
       <span class="radio-panel-status" id="radio-panel-status"></span>
     </div>
@@ -255,8 +263,8 @@
       <span></span><span></span><span></span><span></span><span></span>
     </div>
     <div class="radio-panel-actions">
-      <button class="radio-panel-btn" id="radio-btn-stop"><i class="fa-solid fa-stop"></i> Stop</button>
-      <button class="radio-panel-btn" id="radio-btn-fav"><i class="fa-regular fa-heart"></i> Favorite</button>
+      <button class="radio-panel-btn" id="radio-btn-stop"><i class="fa-solid fa-stop"></i> <span id="t-radio-stop">Stop</span></button>
+      <button class="radio-panel-btn" id="radio-btn-fav"><i class="fa-regular fa-heart"></i> <span id="t-radio-fav">Favorite</span></button>
     </div>
   </div>
 </div>
