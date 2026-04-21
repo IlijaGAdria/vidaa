@@ -240,15 +240,17 @@ export function populateParentalPanel() {
       ? state.userData.locked_categories
       : [];
   var t = (getTranslations().settings || {}).parental || {};
+  var categoryNamesById = state.categoryNamesById || {};
   parentalCategories.forEach(function (cat) {
     var isLocked = lockedCats.indexOf(cat.id) !== -1;
+    var categoryName = categoryNamesById[cat.id] || cat.name;
     var row = document.createElement("div");
     row.className = "parental-row";
     row.dataset.categoryId = cat.id;
     row.dataset.locked = isLocked ? "true" : "false";
     row.innerHTML =
       '<div class="parental-row-icon"><i class="fa-solid ' + cat.icon + '"></i></div>' +
-      '<div class="parental-row-name">' + cat.name + "</div>" +
+      '<div class="parental-row-name">' + categoryName + "</div>" +
       '<div class="parental-row-status ' + (isLocked ? "locked" : "unlocked") + '">' +
         '<i class="fa-solid ' + (isLocked ? "fa-lock" : "fa-lock-open") + '"></i> ' +
         (isLocked ? (t.locked || "Locked") : (t.unlocked || "Unlocked")) +

@@ -1,7 +1,7 @@
 import { login, getInfo, getLanguages } from "../api.js";
 import { setLanguage, getLanguage } from "../language.js";
 
-import { fetchWeather } from "../weather_api.js";
+import { fetchWeather, setWeatherDayTranslations } from "../weather_api.js";
 
 import VirtualKeyboard from "../virtual_keyboard.js";
 
@@ -58,6 +58,15 @@ class LoginScreen {
     getLanguages().then(function(data) {
       if (data && data.languages) {
         self.languages = data.languages;
+        var currentLangId = parseInt(getLanguage(), 10);
+        for (var i = 0; i < self.languages.length; i++) {
+          if (self.languages[i].id === currentLangId) {
+            var days = self.languages[i].days || {};
+            setWeatherDayTranslations(days);
+            fetchWeather();
+            break;
+          }
+        }
         self.applyTranslations();
       }
     }).catch(function(err) {

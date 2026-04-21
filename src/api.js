@@ -219,6 +219,29 @@ export async function getM3uChannels(countryId = 196) {
   }
 }
 
+export async function getCategories(filter = "") {
+  try {
+    return await apiRequest("categories", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/plain, */*",
+        "Authorization": "Bearer " + localStorage.getItem("access_token"),
+        "x-api-auth": "3c2bc63e380b701160ca13cabf39096035470228dfe11f8c9019b27ab2af6e0d",
+        "device-mac": localStorage.getItem("device_mac") || "a1:b2:c3:d4:e5",
+        "device-uid": localStorage.getItem("device_id") || "webbrowser",
+        "language-id": String(getLanguage()),
+        "pn-token": "null",
+        "reskin": reskin,
+      },
+      body: JSON.stringify({ filter: filter }),
+    });
+  } catch (error) {
+    console.error("Request failed:", error);
+    throw error;
+  }
+}
+
 export async function getChannelCategories(channelId) {
   try {
     return await apiRequest(`channel/categories/${channelId}`, {

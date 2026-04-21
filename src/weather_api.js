@@ -6,6 +6,12 @@ const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${a
 
 console.log("Fetching weather data");
 
+var dayLabels = null;
+
+export function setWeatherDayTranslations(days) {
+    dayLabels = days || null;
+}
+
 export async function fetchWeather() {
 
     fetch(url)
@@ -24,7 +30,11 @@ export async function fetchWeather() {
         // Formated date
         const day = date.getDate();
         const month = date.getMonth() + 1;
-        const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
+        const weekdayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+        const weekdayKey = weekdayKeys[date.getDay()];
+        const weekday = (dayLabels && dayLabels[weekdayKey])
+            ? dayLabels[weekdayKey]
+            : date.toLocaleDateString("en-US", { weekday: "short" });
         const formatted_date = `${day}.${month}. ${weekday}`;
 
 

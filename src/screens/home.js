@@ -1,6 +1,6 @@
-import { getChannels, getInternetChannelFilters, getMovies, getUser, fetchNewsCountries, fetchNewsFeed, getVideoTutorialCategories, getVideoTutorials, getInfo, getLanguages } from "../api.js";
+import { getChannels, getInternetChannelFilters, getMovies, getUser, fetchNewsCountries, fetchNewsFeed, getVideoTutorialCategories, getVideoTutorials, getInfo, getLanguages, getCategories } from "../api.js";
 import Remote from "../remote.js";
-import { fetchWeather } from "../weather_api.js";
+import { fetchWeather, setWeatherDayTranslations } from "../weather_api.js";
 import { getLanguage } from "../language.js";
 import state from "./state.js";
 import { handler, loadInternetCountries, loadMovieCategories, loadNewsCountries, loadVideoTutorialCategories } from "./navigation.js";
@@ -14,9 +14,12 @@ function applyHomeTranslations() {
       break;
     }
   }
-  if (!langObj) return;
+  if (!langObj) langObj = {};
 
   var menu = langObj.menu || {};
+  var mobileHeader = menu.mobile_header || {};
+  var channels = langObj.channels || {};
+  var channelCategories = channels.categories || channels;
   var settings = langObj.settings || {};
   var home = langObj.home || {};
   var search = langObj.search || {};
@@ -29,6 +32,14 @@ function applyHomeTranslations() {
   function setText(id, text) {
     var el = document.getElementById(id);
     if (el && text) el.textContent = text;
+  }
+
+  function setSubText(subId, text) {
+    if (!text) return;
+    var sub = document.getElementById(subId);
+    if (!sub) return;
+    var label = sub.querySelector("span[id^='t-sub-']");
+    if (label) label.textContent = text;
   }
 
   // Main menu items
@@ -57,8 +68,53 @@ function applyHomeTranslations() {
 
   // Favorites sub-menu
   var favSub = favorites.submenu || {};
-  setText("t-fav-tv", favSub.tv_channels);
-  setText("t-fav-radio", favSub.radio_stations);
+  setText("t-fav-tv", favSub.tv_channels || favorites.tv_channels || menu.tv_channels);
+  setText("t-fav-radio", favSub.radio_stations || favorites.radio_stations || menu.radio);
+
+  // TV categories sub-menu
+  setText("t-sub-all", mobileHeader.all_tv_channels || channelCategories.all || filters.all);
+  setText("t-sub-favorites", menu.favorites || channelCategories.favorites);
+  setText("t-sub-internet-tv", menu.internet_tv || mobileHeader.internet_tv || channelCategories.internet_tv);
+  setText("t-sub-adria-telekom", channelCategories.adria_telekom || channelCategories.adria_telekom_channels);
+  setText("t-sub-music", channelCategories.music);
+  setText("t-sub-reality", channelCategories.reality);
+  setText("t-sub-vod", channelCategories.vod);
+  setText("t-sub-adult", channelCategories.adult || channelCategories.adult_channels);
+  setText("t-sub-news", channelCategories.news || menu.news);
+  setText("t-sub-general", channelCategories.general);
+  setText("t-sub-documentaries", channelCategories.documentaries);
+  setText("t-sub-children", channelCategories.children);
+  setText("t-sub-movies", channelCategories.movies || menu.movies);
+  setText("t-sub-sports", channelCategories.sports);
+  setText("t-sub-entertainment", channelCategories.entertainment);
+  setText("t-sub-4k-uhd", channelCategories["4k_uhd"] || channelCategories.uhd_4k || channelCategories.uhd);
+  setText("t-sub-local", channelCategories.local || channelCategories.local_channels);
+  setText("t-sub-international-fta", channelCategories.international_fta);
+  setText("t-sub-camera", channelCategories.camera);
+  setText("t-sub-youtube", channelCategories.youtube);
+
+  // Override submenu category labels from /categories response
+  var namesById = state.categoryNamesById || {};
+  var subCategoryMap = {
+    "sub-adria-telekom": 25,
+    "sub-music": 2,
+    "sub-news": 8,
+    "sub-sports": 3,
+    "sub-movies": 4,
+    "sub-children": 5,
+    "sub-documentaries": 6,
+    "sub-entertainment": 1,
+    "sub-reality": 19,
+    "sub-4k-uhd": 21,
+    "sub-local": 16,
+    "sub-international-fta": 17,
+    "sub-camera": 18,
+    "sub-adult": 9,
+  };
+  Object.keys(subCategoryMap).forEach(function (subId) {
+    var catId = subCategoryMap[subId];
+    if (namesById[catId]) setSubText(subId, namesById[catId]);
+  });
 
   // Settings sub-menu
   var settingsSub = settings.submenu || {};
@@ -345,10 +401,35 @@ class HomeScreen {
     getLanguages().then(function(data) {
       if (data && data.languages) {
         state.homeLanguages = data.languages;
+        var currentLangId = parseInt(getLanguage(), 10);
+        for (var i = 0; i < state.homeLanguages.length; i++) {
+          if (state.homeLanguages[i].id === currentLangId) {
+            setWeatherDayTranslations((state.homeLanguages[i].days || {}));
+            fetchWeather();
+            break;
+          }
+        }
         applyHomeTranslations();
       }
     }).catch(function(err) {
       console.error("Failed to load languages:", err);
+    });
+
+    // Fetch category names translated by current language-id
+    getCategories("").then(function(data) {
+      var list = Array.isArray(data) ? data : (data && data.data ? data.data : []);
+      state.categoriesData = list;
+      state.categoryNamesById = {};
+      list.forEach(function(cat) {
+        if (cat && cat.id != null && cat.category_name) {
+          state.categoryNamesById[cat.id] = cat.category_name;
+        }
+      });
+      applyHomeTranslations();
+    }).catch(function(err) {
+      console.error("Failed to load categories:", err);
+      state.categoriesData = [];
+      state.categoryNamesById = {};
     });
 
     // Setup radio now-playing panel

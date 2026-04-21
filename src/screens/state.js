@@ -87,6 +87,10 @@ const state = {
   // Raw channel data from API
   channelsData: [],
 
+  // Categories API data (translated by language-id header)
+  categoriesData: [],
+  categoryNamesById: {},
+
   // Radio stations data from API
   radiosData: [],
 
