@@ -24,6 +24,7 @@ export const FOCUS = {
   SEARCH_INPUT: "searchinput",
   SEARCH_RESULTS: "searchresults",
   PARENTAL_CONTROL: "parentalcontrol",
+  LANGUAGE_PANEL: "languagepanel",
 };
 
 // Scroll visible items offset

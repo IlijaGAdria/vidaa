@@ -7,10 +7,11 @@ import { handler, loadInternetCountries, loadMovieCategories, loadNewsCountries,
 
 function applyHomeTranslations() {
   var currentLangId = parseInt(getLanguage(), 10);
+  var languages = state.homeLanguages || [];
   var langObj = null;
-  for (var i = 0; i < state.homeLanguages.length; i++) {
-    if (state.homeLanguages[i].id === currentLangId) {
-      langObj = state.homeLanguages[i];
+  for (var i = 0; i < languages.length; i++) {
+    if (languages[i].id === currentLangId) {
+      langObj = languages[i];
       break;
     }
   }
@@ -21,6 +22,7 @@ function applyHomeTranslations() {
   var channels = langObj.channels || {};
   var channelCategories = channels.categories || channels;
   var settings = langObj.settings || {};
+  var language = langObj.language || {};
   var home = langObj.home || {};
   var search = langObj.search || {};
   var player = langObj.player || {};
@@ -121,11 +123,13 @@ function applyHomeTranslations() {
   setText("t-settings-account", settingsSub.account);
   setText("t-settings-parental", settingsSub.parental);
   setText("t-settings-changepin", settingsSub.change_pin);
+  setText("t-settings-language", settingsSub.language || language.choose_language_label);
   setText("t-settings-contact", settingsSub.contact);
 
   // Panel titles
   setText("t-account-title", settingsSub.account);
   setText("t-parental-title", settingsSub.parental);
+  setText("t-language-title", settingsSub.language || language.choose_language_label);
   setText("t-contact-title", settingsSub.contact);
 
   // Contact panel text
@@ -270,6 +274,12 @@ class HomeScreen {
     state.settingsSubMenu = document.getElementById("settings-sub-menu");
     state.settingsSubItems = Array.from(state.settingsSubMenu.querySelectorAll(".sub-item"));
     state.settingsSubIndex = 0;
+
+    // Setup language panel
+    state.languagePanel = document.getElementById("language-panel");
+    state.languageRows = document.getElementById("language-rows");
+    state.languageRowItems = [];
+    state.languageRowIndex = 0;
 
     // Setup account info panel
     state.accountPanel = document.getElementById("account-panel");

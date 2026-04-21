@@ -3,7 +3,7 @@ import { lockCategory, unlockCategory, changePincode } from "../../api.js";
 import { parentalCategories } from "./constants.js";
 import { moveFocus } from "./focusUtils.js";
 import { PARENTAL_SCROLL_OFFSET } from "./constants.js";
-import { getLanguage } from "../../language.js";
+import { getLanguage, setLanguage } from "../../language.js";
 
 function getTranslations() {
   if (!state.homeLanguages || !state.homeLanguages.length) return {};
@@ -358,6 +358,76 @@ export function showContactPanel() {
 
 export function hideContactPanel() {
   if (state.contactPanel) state.contactPanel.classList.remove("visible");
+}
+
+// ================================================
+// Language Panel
+// ================================================
+
+export function showLanguagePanel() {
+  if (!state.languagePanel || !state.languageRows) return;
+  while (state.languageRows.firstChild) {
+    state.languageRows.removeChild(state.languageRows.firstChild);
+  }
+
+  var currentLangId = parseInt(getLanguage(), 10);
+  state.languageRowIndex = 0;
+
+  (state.homeLanguages || []).forEach(function (lang, idx) {
+    var row = document.createElement("div");
+    row.className = "language-row";
+    row.dataset.langId = lang.id;
+
+    var iconHtml = lang.icon
+      ? '<img class="language-row-flag" src="' + escapeHtml(lang.icon) + '" alt="' + escapeHtml(lang.name || "") + '">'
+      : '<div class="language-row-flag"></div>';
+    var checkHtml = lang.id === currentLangId
+      ? '<i class="fa-solid fa-check language-row-check"></i>'
+      : "";
+
+    row.innerHTML =
+      iconHtml +
+      '<div class="language-row-name">' + escapeHtml(lang.name || "") + "</div>" +
+      checkHtml;
+
+    state.languageRows.appendChild(row);
+    if (lang.id === currentLangId) state.languageRowIndex = idx;
+  });
+
+  state.languageRowItems = Array.from(state.languageRows.querySelectorAll(".language-row"));
+  if (state.languagePanel) state.languagePanel.classList.add("visible");
+  updateLanguagePanelFocus();
+  state.focusMode = "languagepanel";
+}
+
+export function hideLanguagePanel() {
+  if (state.languagePanel) state.languagePanel.classList.remove("visible");
+  state.languageRowItems.forEach(function (row) { row.classList.remove("active"); });
+}
+
+export function moveLanguagePanelFocus(direction) {
+  moveFocus({
+    items: state.languageRowItems,
+    indexKey: "languageRowIndex",
+    wrapper: state.languageRows,
+    direction: direction,
+    scrollOffset: PARENTAL_SCROLL_OFFSET,
+  });
+}
+
+export function selectLanguageFromPanel() {
+  var row = state.languageRowItems[state.languageRowIndex];
+  if (!row) return;
+  var langId = parseInt(row.dataset.langId, 10);
+  if (!langId) return;
+  setLanguage(langId);
+  window.location.reload();
+}
+
+function updateLanguagePanelFocus() {
+  state.languageRowItems.forEach(function (row) { row.classList.remove("active"); });
+  var active = state.languageRowItems[state.languageRowIndex];
+  if (active) active.classList.add("active");
 }
 
 function populateContactPanel() {
