@@ -89,6 +89,14 @@ function updatePlayerOverlay(streamUrl) {
   }
 }
 
+// Append the stream auth token (issued at login) so the CDN accepts the request
+function withStreamToken(streamUrl) {
+  var token = localStorage.getItem("stream_token");
+  if (!token) return streamUrl;
+  var sep = streamUrl.indexOf("?") === -1 ? "?" : "&";
+  return streamUrl + sep + "token=" + encodeURIComponent(token);
+}
+
 // Start playing a stream (video only — no UI management)
 export function playChannel(streamUrl) {
   var playerDiv = document.getElementById("video-player");
@@ -98,10 +106,12 @@ export function playChannel(streamUrl) {
   playerDiv.classList.add("active");
   updatePlayerOverlay(streamUrl);
 
+  var playbackUrl = withStreamToken(streamUrl);
+
   if (window.Hls && Hls.isSupported()) {
     if (hlsInstance) hlsInstance.destroy();
     hlsInstance = new Hls();
-    hlsInstance.loadSource(streamUrl);
+    hlsInstance.loadSource(playbackUrl);
     hlsInstance.attachMedia(videoEl);
     hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
       videoEl.play();
@@ -111,12 +121,12 @@ export function playChannel(streamUrl) {
         console.warn("[Player] HLS fatal error, falling back to direct playback:", data.type);
         hlsInstance.destroy();
         hlsInstance = null;
-        videoEl.src = streamUrl;
+        videoEl.src = playbackUrl;
         videoEl.play();
       }
     });
   } else if (videoEl.canPlayType("application/vnd.apple.mpegurl")) {
-    videoEl.src = streamUrl;
+    videoEl.src = playbackUrl;
     videoEl.play();
   }
 }

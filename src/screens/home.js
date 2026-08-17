@@ -497,17 +497,19 @@ class HomeScreen {
     fetchWeather();
     setInterval(fetchWeather, 60000);
 
-    // Set background image from user preference
-    getUser().then(function(userData) {
-      if (userData && userData.background_image && userData.background_image.url) {
-        var content = document.querySelector('.content');
-        if (content) {
-          content.style.backgroundImage = 'url(' + userData.background_image.url + ')';
+    // Set background image: user's favorite if set, otherwise the site default (same as login screen)
+    var content = document.querySelector('.content');
+    if (state.userData && state.userData.background_image && state.userData.background_image.url) {
+      if (content) content.style.backgroundImage = 'url(' + state.userData.background_image.url + ')';
+    } else {
+      getInfo().then(function(data) {
+        if (data && data.default_background_image && data.default_background_image.url && content) {
+          content.style.backgroundImage = "url('" + data.default_background_image.url + "')";
         }
-      }
-    }).catch(function(err) {
-      console.error("Failed to load user background:", err);
-    });
+      }).catch(function(err) {
+        console.error("Failed to load default background:", err);
+      });
+    }
 
   }
 
